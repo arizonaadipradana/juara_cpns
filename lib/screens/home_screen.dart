@@ -7,21 +7,19 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Juara CPNS'),
+        title: const Text(
+            'Halo, Arizona!',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Selamat Datang di Juara CPNS!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
             _buildStatisticsCard(),
             const SizedBox(height: 20),
             _buildFeatureGrid(context),

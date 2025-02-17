@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "359125944960",
+    "project_id": "juara-cpns",
+    "storage_bucket": "juara-cpns.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:359125944960:android:157008b207052a957ef465",
+        "android_client_info": {
+          "package_name": "com.example.juara_cpns"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFH96lTRlHV1-i1vE4SLgYbEiOWfo8Zuo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

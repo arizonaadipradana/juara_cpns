@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/screens/auth_screen.dart';
 import 'package:juara_cpns/screens/home_screen.dart';
 import 'package:juara_cpns/screens/profile_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const JuaraCPNSApp());
 }
 
@@ -17,7 +25,15 @@ class JuaraCPNSApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const MainScreen(),
+      home: StreamBuilder(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (ctx, snapshot) {
+          if (snapshot.hasData) {
+            return const MainScreen();
+          }
+          return const AuthScreen();
+        },
+      ),
     );
   }
 }

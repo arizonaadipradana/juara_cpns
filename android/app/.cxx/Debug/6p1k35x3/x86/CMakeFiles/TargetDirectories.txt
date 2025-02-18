@@ -1,0 +1,2 @@
+E:/Android Project/Juara_CPNS/android/app/.cxx/Debug/6p1k35x3/x86/CMakeFiles/edit_cache.dir
+E:/Android Project/Juara_CPNS/android/app/.cxx/Debug/6p1k35x3/x86/CMakeFiles/rebuild_cache.dir

@@ -1,29 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    final user = FirebaseAuth.instance.currentUser!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-            'Halo, Arizona!',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold
-          ),
+        title: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Text('Halo!');
+            }
+            final userData = snapshot.data?.data() as Map<String, dynamic>?;
+            final username = userData?['username'] ?? 'Hello!';
+            return Text(
+              'Hello, $username!',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            );
+          },
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStatisticsCard(),
-            const SizedBox(height: 20),
-            _buildFeatureGrid(context),
-          ],
+      // Wrap the body in SafeArea to handle system UI intrusions
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 16.0,
+                bottom: 16.0 + bottomPadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatisticsCard(),
+                  const SizedBox(height: 20),
+                  _buildFeatureGrid(context),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -75,11 +106,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildFeatureGrid(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.width > 600;
+
     return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      childAspectRatio: 1.5,
+      shrinkWrap: true, // Add this to make grid take only needed space
+      physics: const NeverScrollableScrollPhysics(), // Disable scrolling
+      crossAxisCount: isTablet ? 4 : 2,
+      childAspectRatio: isTablet ? 1.5 : 1.3,
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
       children: [
@@ -138,6 +171,7 @@ class HomeScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
               Text(
                 subtitle,
@@ -147,137 +181,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-
-class PracticeTestScreen extends StatelessWidget {
-  const PracticeTestScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Latihan Soal'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildTestCategory('TWK - Tes Wawasan Kebangsaan'),
-          _buildTestCategory('TIU - Tes Intelegensi Umum'),
-          _buildTestCategory('TKP - Tes Karakteristik Pribadi'),
-          _buildTestCategory('Tryout Lengkap'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTestCategory(String title) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 3,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.assignment),
-                  ),
-                  title: Text('Paket ${index + 1}'),
-                  subtitle: const Text('30 Soal • Durasi 30 Menit'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {
-                    // Navigate to test
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-class LearningMaterialScreen extends StatelessWidget {
-  const LearningMaterialScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Materi Pembelajaran'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildMaterialCategory(
-            'TWK - Tes Wawasan Kebangsaan',
-            [
-              'Pancasila',
-              'UUD 1945',
-              'Sejarah Indonesia',
-              'Sistem Pemerintahan',
-            ],
-          ),
-          _buildMaterialCategory(
-            'TIU - Tes Intelegensi Umum',
-            [
-              'Verbal Analogi',
-              'Numerik',
-              'Logika',
-              'Spasial',
-            ],
-          ),
-          _buildMaterialCategory(
-            'TKP - Tes Karakteristik Pribadi',
-            [
-              'Pelayanan Publik',
-              'Sosial Budaya',
-              'Profesionalisme',
-              'Jejaring Kerja',
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMaterialCategory(String title, List<String> subjects) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      child: ExpansionTile(
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        children: subjects.map((subject) {
-          return ListTile(
-            leading: const Icon(Icons.book),
-            title: Text(subject),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              // Navigate to material detail
-            },
-          );
-        }).toList(),
       ),
     );
   }

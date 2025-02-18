@@ -113,135 +113,184 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  Widget _buildForm(BuildContext context, BoxConstraints constraints) {
+    final isWeb = constraints.maxWidth > 600;
+    final formWidth = isWeb ? constraints.maxWidth * 0.4 : constraints.maxWidth;
+
+    return Container(
+      width: formWidth,
+      constraints: const BoxConstraints(maxWidth: 600),
+      child: Card(
+        margin: EdgeInsets.all(isWeb ? 0 : 20),
+        child: Padding(
+          padding: EdgeInsets.all(isWeb ? 32 : 16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!_isLogin)
+                  Column(
+                    children: [
+                      TextFormField(
+                        key: const ValueKey('username'),
+                        validator: (value) {
+                          if (value == null || value.length < 4) {
+                            return 'Masukkan minimal 4 karakter';
+                          }
+                          return null;
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Nama Lengkap',
+                          prefixIcon: Icon(Icons.person),
+                        ),
+                        onSaved: (value) {
+                          _username = value ?? '';
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        key: const ValueKey('phoneNumber'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Masukkan nomor telepon';
+                          }
+                          return null;
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Nomor Telepon',
+                          prefixIcon: Icon(Icons.phone),
+                        ),
+                        onSaved: (value) {
+                          _phoneNumber = value ?? '';
+                        },
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  key: const ValueKey('email'),
+                  validator: (value) {
+                    if (value == null ||
+                        value.isEmpty ||
+                        !value.contains('@')) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Alamat email',
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                  onSaved: (value) {
+                    _email = value ?? '';
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  key: const ValueKey('password'),
+                  validator: (value) {
+                    if (value == null || value.length < 6) {
+                      return 'Password must be at least 6 characters long';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  obscureText: true,
+                  onSaved: (value) {
+                    _password = value ?? '';
+                  },
+                ),
+                const SizedBox(height: 24),
+                if (_isLoading)
+                  const CircularProgressIndicator()
+                else
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(isWeb ? 200 : double.infinity, 48),
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                    ),
+                    child: Text(_isLogin ? 'Login' : 'Signup'),
+                  ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isLogin = !_isLogin;
+                    });
+                  },
+                  child: Text(_isLogin
+                      ? 'Belum punya akun? klik disini untuk Daftar'
+                      : 'Aku sudah punya akun'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Juara CPNS',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWeb = constraints.maxWidth > 600;
+
+          return SingleChildScrollView(
+            child: Container(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
               ),
-              const SizedBox(height: 48),
-              Card(
-                margin: const EdgeInsets.all(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (!_isLogin)
-                          Column(
-                            children: [
-                              TextFormField(
-                                key: const ValueKey('username'),
-                                validator: (value) {
-                                  if (value == null || value.length < 4) {
-                                    return 'Masukkan minimal 4 karakter';
-                                  }
-                                  return null;
-                                },
-                                decoration: const InputDecoration(
-                                  labelText: 'Nama Lengkap',
-                                  prefixIcon: Icon(Icons.person),
-                                ),
-                                onSaved: (value) {
-                                  _username = value ?? '';
-                                },
-                              ),
-                              TextFormField(
-                                key: const ValueKey('phoneNumber'),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Masukkan nomor telepon';
-                                  }
-                                  return null;
-                                },
-                                decoration: const InputDecoration(
-                                  labelText: 'Nomor Telepon',
-                                  prefixIcon: Icon(Icons.phone),
-                                ),
-                                onSaved: (value) {
-                                  _phoneNumber = value ?? '';
-                                },
-                              ),
-                            ],
+              child: IntrinsicHeight(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isWeb) const SizedBox(height: 48),
+                    // Logo Section
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        vertical: isWeb ? 48 : 24,
+                        horizontal: 16,
+                      ),
+                      child: Column(
+                        children: [
+                          // You can add a logo image here
+                          Icon(
+                            Icons.school,
+                            size: isWeb ? 80 : 60,
+                            color: Colors.blue,
                           ),
-                        TextFormField(
-                          key: const ValueKey('email'),
-                          validator: (value) {
-                            if (value == null ||
-                                value.isEmpty ||
-                                !value.contains('@')) {
-                              return 'Please enter a valid email address';
-                            }
-                            return null;
-                          },
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Alamat email',
-                            prefixIcon: Icon(Icons.email),
-                          ),
-                          onSaved: (value) {
-                            _email = value ?? '';
-                          },
-                        ),
-                        TextFormField(
-                          key: const ValueKey('password'),
-                          validator: (value) {
-                            if (value == null || value.length < 6) {
-                              return 'Password must be at least 6 characters long';
-                            }
-                            return null;
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock),
-                          ),
-                          obscureText: true,
-                          onSaved: (value) {
-                            _password = value ?? '';
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        if (_isLoading)
-                          const CircularProgressIndicator()
-                        else
-                          ElevatedButton(
-                            onPressed: _submit,
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 40),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Juara CPNS',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isWeb ? 32 : 24,
                             ),
-                            child: Text(_isLogin ? 'Login' : 'Signup'),
                           ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _isLogin = !_isLogin;
-                            });
-                          },
-                          child: Text(_isLogin
-                              ? 'Belum punya akun? klik disini untuk Daftar'
-                              : 'Aku sudah punya akun'),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    // Form Section
+                    Center(
+                      child: _buildForm(context, constraints),
+                    ),
+                    if (isWeb) const SizedBox(height: 48),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

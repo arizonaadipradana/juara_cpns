@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/screens/tryout_screen.dart';
 
 class PracticeTestScreen extends StatelessWidget {
   const PracticeTestScreen({super.key});
@@ -12,16 +13,16 @@ class PracticeTestScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          _buildTestCategory('TWK - Tes Wawasan Kebangsaan'),
-          _buildTestCategory('TIU - Tes Intelegensi Umum'),
-          _buildTestCategory('TKP - Tes Karakteristik Pribadi'),
-          _buildTestCategory('Tryout Lengkap'),
+          _buildTestCategory(context, 'TWK - Tes Wawasan Kebangsaan', 'TWK'),
+          _buildTestCategory(context, 'TIU - Tes Intelegensi Umum', 'TIU'),
+          _buildTestCategory(context, 'TKP - Tes Karakteristik Pribadi', 'TKP'),
+          _buildTestCategory(context, 'Tryout Lengkap', 'FULL'),
         ],
       ),
     );
   }
 
-  Widget _buildTestCategory(String title) {
+  Widget _buildTestCategory(BuildContext context, String title, String type) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       child: Padding(
@@ -50,7 +51,10 @@ class PracticeTestScreen extends StatelessWidget {
                   subtitle: const Text('30 Soal • Durasi 30 Menit'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    // Navigate to test
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => TryoutScreen(type: type)));
                   },
                 );
               },

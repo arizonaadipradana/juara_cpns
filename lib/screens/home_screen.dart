@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -34,7 +34,6 @@ class HomeScreen extends StatelessWidget {
           },
         ),
       ),
-      // Wrap the body in SafeArea to handle system UI intrusions
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -78,9 +77,9 @@ class HomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Soal Dikerjakan', '150'),
-                _buildStatItem('Akurasi', '75%'),
-                _buildStatItem('Waktu Belajar', '10 jam'),
+                Expanded(child: _buildStatItem('Soal Dikerjakan', '150')),
+                Expanded(child: _buildStatItem('Akurasi', '75%')),
+                Expanded(child: _buildStatItem('Waktu Belajar', '10 jam')),
               ],
             ),
           ],
@@ -91,6 +90,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildStatItem(String label, String value) {
     return Column(
+      mainAxisSize: MainAxisSize.min, // Add this to prevent vertical overflow
       children: [
         Text(
           value,
@@ -100,7 +100,12 @@ class HomeScreen extends StatelessWidget {
             color: Colors.blue,
           ),
         ),
-        Text(label),
+        const SizedBox(height: 4), // Add spacing between value and label
+        Text(
+          label,
+          textAlign: TextAlign.center, // Center align multi-line text
+          style: const TextStyle(fontSize: 12), // Reduce font size
+        ),
       ],
     );
   }
@@ -109,41 +114,48 @@ class HomeScreen extends StatelessWidget {
     final isTablet = MediaQuery.of(context).size.width > 600;
 
     return GridView.count(
-      shrinkWrap: true, // Add this to make grid take only needed space
-      physics: const NeverScrollableScrollPhysics(), // Disable scrolling
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: isTablet ? 4 : 2,
-      childAspectRatio: isTablet ? 1.5 : 1.3,
+      childAspectRatio: isTablet ? 1.5 : 1.5,
+      // Increased ratio to prevent overflow
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
       children: [
-        _buildFeatureCard(
+        SingleChildScrollView(
+            child: _buildFeatureCard(
           context,
           'Tryout CPNS',
           'Latihan soal lengkap',
           Icons.assignment,
           Colors.blue,
-        ),
-        _buildFeatureCard(
+        )),
+        SingleChildScrollView(
+            child: _buildFeatureCard(
           context,
           'Materi TWK',
           'Tes Wawasan Kebangsaan',
           Icons.book,
           Colors.green,
+        )),
+        SingleChildScrollView(
+          child: _buildFeatureCard(
+            context,
+            'Materi TIU',
+            'Tes Intelegensi Umum',
+            Icons.psychology,
+            Colors.orange,
+          ),
         ),
-        _buildFeatureCard(
-          context,
-          'Materi TIU',
-          'Tes Intelegensi Umum',
-          Icons.psychology,
-          Colors.orange,
-        ),
-        _buildFeatureCard(
-          context,
-          'Materi TKP',
-          'Tes Karakteristik Pribadi',
-          Icons.person_outline,
-          Colors.purple,
-        ),
+        SingleChildScrollView(
+          child: _buildFeatureCard(
+            context,
+            'Materi TKP',
+            'Tes Karakteristik Pribadi',
+            Icons.person_outline,
+            Colors.purple,
+          ),
+        )
       ],
     );
   }
@@ -156,9 +168,11 @@ class HomeScreen extends StatelessWidget {
           // Navigate to feature
         },
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(10.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            // Add this to prevent vertical overflow
             children: [
               Icon(
                 icon,
@@ -170,9 +184,11 @@ class HomeScreen extends StatelessWidget {
                 title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
+                  fontSize: 14, // Slightly reduced font size
                 ),
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 4), // Consistent spacing
               Text(
                 subtitle,
                 style: const TextStyle(fontSize: 12),

@@ -1,13 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:juara_cpns/class/question_model.dart';
 
 class TryoutScreen extends StatefulWidget {
-  final String type; // 'TWK', 'TIU', or 'TKP'
+  final String type;
+  final String? packageId;
 
-  const TryoutScreen({Key? key, required this.type}) : super(key: key);
+  const TryoutScreen({
+    Key? key,
+    required this.type,
+    this.packageId,
+  }) : super(key: key);
 
   @override
   _TryoutScreenState createState() => _TryoutScreenState();
@@ -20,12 +25,57 @@ class _TryoutScreenState extends State<TryoutScreen> {
   Timer? timer;
   int remainingSeconds = 0;
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
     loadQuestions();
-    startTimer();
+  }
+
+  Future<void> loadQuestions() async {
+    try {
+      Query query = FirebaseFirestore.instance.collection('questions');
+
+      // Modified filtering logic
+      if (widget.packageId != null) {
+        query = query.where('packageId', isEqualTo: widget.packageId);
+      } else {
+        // Remove the packageId filter if you want to show all questions of a type
+        query = query
+            .where('type', isEqualTo: widget.type)
+            .limit(30);
+      }
+
+      final questionsSnapshot = await query.get();
+
+      // Add debug print to check results
+      print('Found ${questionsSnapshot.docs.length} questions');
+
+      if (questionsSnapshot.docs.isEmpty) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Tidak ada soal tersedia untuk saat ini';
+        });
+        return;
+      }
+
+      setState(() {
+        questions = questionsSnapshot.docs
+            .map((doc) => Question.fromMap(
+            {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+            .toList();
+        questions.shuffle();
+        isLoading = false;
+        startTimer();
+      });
+    } catch (e) {
+      print('Error loading questions: $e'); // Add error logging
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Terjadi kesalahan saat memuat soal: ${e.toString()}';
+      });
+    }
   }
 
   void startTimer() {
@@ -51,70 +101,61 @@ class _TryoutScreenState extends State<TryoutScreen> {
         if (remainingSeconds > 0) {
           remainingSeconds--;
         } else {
-          submitAnswers();
+          // submitAnswers();
         }
       });
     });
   }
 
-  Future<void> loadQuestions() async {
-    final questionsSnapshot = await FirebaseFirestore.instance
-        .collection('questions')
-        .where('type', isEqualTo: widget.type)
-        .get();
-
-    setState(() {
-      questions = questionsSnapshot.docs
-          .map((doc) => Question.fromMap(doc.data()))
-          .toList();
-      isLoading = false;
-    });
-  }
-
-  Future<void> submitAnswers() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    int score = 0;
-    for (var question in questions) {
-      final userAnswer = userAnswers[question.id];
-      if (userAnswer == null) continue;
-
-      if (question.type == 'TKP') {
-        score += question.tkpScoring[userAnswer] ?? 0;
-      } else {
-        score += userAnswer == question.correctAnswer ? 5 : 0;
-      }
-    }
-
-    await FirebaseFirestore.instance
-        .collection('user_answers')
-        .doc(user.uid)
-        .collection('attempts')
-        .add({
-      'type': widget.type,
-      'score': score,
-      'answers': userAnswers,
-      'completedAt': FieldValue.serverTimestamp(),
-    });
-
-    // if (mounted) {
-    //   Navigator.of(context).pushReplacement(
-    //     MaterialPageRoute(
-    //       builder: (context) => ResultScreen(
-    //         score: score,
-    //         type: widget.type,
-    //       ),
-    //     ),
-    //   );
-    // }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Tryout ${widget.type}'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Tryout ${widget.type}'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Kembali'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (questions.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Tryout ${widget.type}'),
+        ),
+        body: const Center(
+          child: Text('Tidak ada soal tersedia'),
+        ),
       );
     }
 
@@ -129,7 +170,8 @@ class _TryoutScreenState extends State<TryoutScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 '${remainingSeconds ~/ 60}:${(remainingSeconds % 60).toString().padLeft(2, '0')}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -138,7 +180,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
       body: Column(
         children: [
           LinearProgressIndicator(
-            value: currentQuestionIndex / questions.length,
+            value: (currentQuestionIndex + 1) / questions.length,
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -147,7 +189,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Soal ${currentQuestionIndex + 1}',
+                    'Soal ${currentQuestionIndex + 1} dari ${questions.length}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -198,11 +240,11 @@ class _TryoutScreenState extends State<TryoutScreen> {
                     },
                     child: const Text('Selanjutnya'),
                   ),
-                if (currentQuestionIndex == questions.length - 1)
-                  ElevatedButton(
-                    onPressed: submitAnswers,
-                    child: const Text('Selesai'),
-                  ),
+                // if (currentQuestionIndex == questions.length - 1)
+                //   ElevatedButton(
+                //     onPressed: submitAnswers,
+                //     child: const Text('Selesai'),
+                //   ),
               ],
             ),
           ),

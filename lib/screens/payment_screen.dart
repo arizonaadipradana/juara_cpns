@@ -2,10 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:juara_cpns/class/practice_package_model.dart';
 import 'package:juara_cpns/screens/tryout_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
-  final Map<String, dynamic> package;
+  final PracticePackage package;
 
   const PaymentScreen({
     Key? key,
@@ -42,8 +43,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           .collection('payments')
           .add({
         'userId': user.uid,
-        'packageId': widget.package['id'],
-        'amount': widget.package['price'],
+        'packageId': widget.package.id,
+        'amount': widget.package.price,
         'status': 'pending',
         'paymentMethod': selectedPaymentMethod,
         'createdAt': FieldValue.serverTimestamp(),
@@ -64,7 +65,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           .collection('user_packages')
           .add({
         'userId': user.uid,
-        'packageId': widget.package['id'],
+        'packageId': widget.package.id,
         'purchasedAt': FieldValue.serverTimestamp(),
         'expiresAt': Timestamp.fromDate(
           DateTime.now().add(const Duration(days: 30)),
@@ -87,8 +88,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => TryoutScreen(
-                        type: 'FULL',
-                        packageId: widget.package['id'],
+                        type: widget.package.type,
+                        packageId: widget.package.id,
                       ),
                     ),
                   );
@@ -135,14 +136,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.package['name'],
+                      widget.package.title,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(widget.package['description']),
                     const SizedBox(height: 16),
                     Text(
                       'Total Pembayaran:',
@@ -152,7 +151,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                     ),
                     Text(
-                      'Rp${widget.package['price']}',
+                      'Rp${widget.package.price}',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -182,7 +181,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
               },
               title: Row(
                 children: [
-                  // In a real app, you would use Image.asset with the actual logo
                   const Icon(Icons.account_balance, size: 32),
                   const SizedBox(width: 12),
                   Text(method['name']!),

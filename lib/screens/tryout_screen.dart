@@ -26,30 +26,54 @@ class _TryoutScreenState extends State<TryoutScreen> {
   int remainingSeconds = 0;
   bool isLoading = true;
   String? errorMessage;
+  int totalQuestions = 0; // Add this variable to store total questions
 
   @override
   void initState() {
     super.initState();
-    loadQuestions();
+    loadPackageAndQuestions();
+  }
+
+  Future<void> loadPackageAndQuestions() async {
+    try {
+      // First, get the package details to know the total question count
+      if (widget.packageId != null) {
+        final packageDoc = await FirebaseFirestore.instance
+            .collection('practice_packages')
+            .doc(widget.packageId)
+            .get();
+
+        if (packageDoc.exists) {
+          setState(() {
+            totalQuestions = packageDoc.data()?['questionCount'] ?? 0;
+          });
+        }
+      }
+
+      // Then load the questions
+      await loadQuestions();
+    } catch (e) {
+      print('Error loading package details: $e');
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Terjadi kesalahan saat memuat paket: ${e.toString()}';
+      });
+    }
   }
 
   Future<void> loadQuestions() async {
     try {
       Query query = FirebaseFirestore.instance.collection('questions');
 
-      // Modified filtering logic
       if (widget.packageId != null) {
         query = query.where('packageId', isEqualTo: widget.packageId);
       } else {
-        // Remove the packageId filter if you want to show all questions of a type
         query = query
             .where('type', isEqualTo: widget.type)
-            .limit(30);
+            .limit(totalQuestions > 0 ? totalQuestions : 30);
       }
 
       final questionsSnapshot = await query.get();
-
-      // Add debug print to check results
       print('Found ${questionsSnapshot.docs.length} questions');
 
       if (questionsSnapshot.docs.isEmpty) {
@@ -67,10 +91,16 @@ class _TryoutScreenState extends State<TryoutScreen> {
             .toList();
         questions.shuffle();
         isLoading = false;
+
+        // If totalQuestions wasn't set from package, use the actual questions length
+        if (totalQuestions == 0) {
+          totalQuestions = questions.length;
+        }
+
         startTimer();
       });
     } catch (e) {
-      print('Error loading questions: $e'); // Add error logging
+      print('Error loading questions: $e');
       setState(() {
         isLoading = false;
         errorMessage = 'Terjadi kesalahan saat memuat soal: ${e.toString()}';
@@ -170,8 +200,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 '${remainingSeconds ~/ 60}:${(remainingSeconds % 60).toString().padLeft(2, '0')}',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -180,7 +209,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
       body: Column(
         children: [
           LinearProgressIndicator(
-            value: (currentQuestionIndex + 1) / questions.length,
+            value: (currentQuestionIndex + 1) / totalQuestions,
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -189,7 +218,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Soal ${currentQuestionIndex + 1} dari ${questions.length}',
+                    'Soal ${currentQuestionIndex + 1} dari $totalQuestions',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:juara_cpns/class/practice_package_model.dart';
 import 'package:juara_cpns/screens/payment_screen.dart';
 import 'package:juara_cpns/screens/tryout_screen.dart';
@@ -15,8 +15,8 @@ class PracticeTestScreen extends StatelessWidget {
         .orderBy('order')
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => PracticePackage.fromMap(doc.data(), doc.id))
-        .toList());
+            .map((doc) => PracticePackage.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   Stream<DocumentSnapshot> _getTryoutPackage(String packageId) {
@@ -60,27 +60,43 @@ class PracticeTestScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            StreamBuilder<DocumentSnapshot>(
-              stream: _getTryoutPackage('paket-1'),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (!snapshot.hasData || !snapshot.data!.exists) {
-                  return const Center(child: Text('Paket tidak tersedia'));
-                }
-
-                final packageData = snapshot.data!.data() as Map<String, dynamic>;
-                return _buildPackageCard(context, packageData);
-              },
-            ),
+            _buildPackageSection( type: "paket-1"),
+            _buildPackageSection(type: "paket-2")
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPackageSection({
+    required String type,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          StreamBuilder<DocumentSnapshot>(
+            stream: _getTryoutPackage(type),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || !snapshot.data!.exists) {
+                return const Center(child: Text('Paket tidak tersedia'));
+              }
+
+              final packageData =
+              snapshot.data!.data() as Map<String, dynamic>;
+              return _buildPackageCard(context, packageData);
+            },
+          ),
+        ]),
       ),
     );
   }
@@ -148,9 +164,9 @@ class PracticeTestScreen extends StatelessWidget {
                             builder: (context) => package.isLocked
                                 ? PaymentScreen(package: package)
                                 : TryoutScreen(
-                              type: type,
-                              packageId: package.id,
-                            ),
+                                    type: type,
+                                    packageId: package.id,
+                                  ),
                           ),
                         );
                       },
@@ -165,7 +181,8 @@ class PracticeTestScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPackageCard(BuildContext context, Map<String, dynamic> packageData) {
+  Widget _buildPackageCard(
+      BuildContext context, Map<String, dynamic> packageData) {
     final questions = packageData['questions'] as Map<String, dynamic>;
 
     // Create a PracticePackage instance from the package data
@@ -173,13 +190,16 @@ class PracticeTestScreen extends StatelessWidget {
       id: packageData['id'] ?? '',
       title: packageData['name'] ?? 'Paket Tryout',
       type: 'FULL',
-      questionCount: (questions['TWK'] ?? 0) + (questions['TIU'] ?? 0) + (questions['TKP'] ?? 0),
+      questionCount: (questions['TWK'] ?? 0) +
+          (questions['TIU'] ?? 0) +
+          (questions['TKP'] ?? 0),
       duration: packageData['duration'] ?? 0,
       isLocked: packageData['isLocked'] ?? true,
       price: packageData['price'] ?? 0,
       order: packageData['order'] ?? 0,
       isActive: packageData['isActive'] ?? true,
-      lastUpdated: (packageData['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastUpdated: (packageData['lastUpdated'] as Timestamp?)?.toDate() ??
+          DateTime.now(),
     );
 
     return Card(
@@ -219,7 +239,8 @@ class PracticeTestScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => PaymentScreen(
-                            package: package, // Pass the PracticePackage instead of Map
+                            package:
+                                package, // Pass the PracticePackage instead of Map
                           ),
                         ),
                       );

@@ -1,4 +1,3 @@
-// lib/models/tryout_package_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:juara_cpns/class/practice_package_model.dart';
 
@@ -52,7 +51,6 @@ class TryoutPackage {
     };
   }
 
-  // Convert to PracticePackage format for payment processing
   PracticePackage toPracticePackage() {
     return PracticePackage(
       id: id,

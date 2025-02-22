@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:juara_cpns/class/question_model.dart';
+import 'package:juara_cpns/screens/result_screen.dart';
 
 class TryoutScreen extends StatefulWidget {
   final String type;
@@ -27,6 +29,8 @@ class _TryoutScreenState extends State<TryoutScreen> {
   bool isLoading = true;
   String? errorMessage;
   int totalQuestions = 0; // Add this variable to store total questions
+  final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  bool canSubmit = false;
 
   @override
   void initState() {
@@ -87,7 +91,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
       // Create list of questions
       List<Question> loadedQuestions = questionsSnapshot.docs
           .map((doc) => Question.fromMap(
-          {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+              {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
           .toList();
 
       // Shuffle the questions
@@ -115,6 +119,93 @@ class _TryoutScreenState extends State<TryoutScreen> {
         isLoading = false;
         errorMessage = 'Terjadi kesalahan saat memuat soal: ${e.toString()}';
       });
+    }
+  }
+
+  Future<void> submitAnswers() async {
+    if (userId.isEmpty) return;
+
+    try {
+      // Calculate scores
+      Map<String, int> scores = {};
+      int twkScore = 0, tiuScore = 0, tkpScore = 0;
+
+      for (var question in questions) {
+        final userAnswer = userAnswers[question.id];
+        if (userAnswer == null) continue;
+
+        if (question.type == 'TKP') {
+          tkpScore += question.tkpScoring[userAnswer] ?? 0;
+        } else {
+          if (userAnswer == question.correctAnswer) {
+            if (question.type == 'TWK') {
+              twkScore += 5;
+            } else if (question.type == 'TIU') {
+              tiuScore += 5;
+            }
+          }
+        }
+      }
+
+      scores = {
+        'TWK': twkScore,
+        'TIU': tiuScore,
+        'TKP': tkpScore,
+      };
+
+      // Save to Firebase
+      await FirebaseFirestore.instance
+          .collection('user_answers')
+          .doc('${userId}_${widget.packageId ?? widget.type}_${DateTime.now().millisecondsSinceEpoch}')
+          .set({
+        'userId': userId,
+        'packageId': widget.packageId,
+        'type': widget.type,
+        'answers': userAnswers,
+        'scores': scores,
+        'completedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Navigate to result screen
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultScreen(
+              questions: questions,
+              userAnswers: userAnswers,
+              scores: scores,
+              type: widget.type,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error submitting answers: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> saveProgress() async {
+    if (userId.isEmpty) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('user_progress')
+          .doc('${userId}_${widget.packageId ?? widget.type}')
+          .set({
+        'userId': userId,
+        'packageId': widget.packageId,
+        'type': widget.type,
+        'answers': userAnswers,
+        'lastQuestionIndex': currentQuestionIndex,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error saving progress: $e');
     }
   }
 
@@ -210,7 +301,8 @@ class _TryoutScreenState extends State<TryoutScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 '${remainingSeconds ~/ 60}:${(remainingSeconds % 60).toString().padLeft(2, '0')}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -248,10 +340,12 @@ class _TryoutScreenState extends State<TryoutScreen> {
                       onChanged: (value) {
                         setState(() {
                           userAnswers[question.id] = value!;
+                          canSubmit = userAnswers.length == questions.length;
                         });
+                        saveProgress();
                       },
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -276,14 +370,18 @@ class _TryoutScreenState extends State<TryoutScreen> {
                       setState(() {
                         currentQuestionIndex++;
                       });
+                      saveProgress();
                     },
                     child: const Text('Selanjutnya'),
                   ),
-                // if (currentQuestionIndex == questions.length - 1)
-                //   ElevatedButton(
-                //     onPressed: submitAnswers,
-                //     child: const Text('Selesai'),
-                //   ),
+                if (currentQuestionIndex == questions.length - 1 && canSubmit)
+                  ElevatedButton(
+                    onPressed: submitAnswers,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                    ),
+                    child: const Text('Selesai'),
+                  ),
               ],
             ),
           ),

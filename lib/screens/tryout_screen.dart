@@ -9,10 +9,10 @@ class TryoutScreen extends StatefulWidget {
   final String? packageId;
 
   const TryoutScreen({
-    Key? key,
+    super.key,
     required this.type,
     this.packageId,
-  }) : super(key: key);
+  });
 
   @override
   _TryoutScreenState createState() => _TryoutScreenState();
@@ -84,15 +84,25 @@ class _TryoutScreenState extends State<TryoutScreen> {
         return;
       }
 
+      // Create list of questions
+      List<Question> loadedQuestions = questionsSnapshot.docs
+          .map((doc) => Question.fromMap(
+          {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          .toList();
+
+      // Shuffle the questions
+      loadedQuestions.shuffle();
+
+      // Ensure we don't exceed totalQuestions
+      if (totalQuestions > 0 && loadedQuestions.length > totalQuestions) {
+        loadedQuestions = loadedQuestions.sublist(0, totalQuestions);
+      }
+
       setState(() {
-        questions = questionsSnapshot.docs
-            .map((doc) => Question.fromMap(
-            {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
-            .toList();
-        questions.shuffle();
+        questions = loadedQuestions;
         isLoading = false;
 
-        // If totalQuestions wasn't set from package, use the actual questions length
+        // Update totalQuestions if it wasn't set from package
         if (totalQuestions == 0) {
           totalQuestions = questions.length;
         }

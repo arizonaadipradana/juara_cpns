@@ -9,9 +9,9 @@ class PaymentScreen extends StatefulWidget {
   final PracticePackage package;
 
   const PaymentScreen({
-    Key? key,
+    super.key,
     required this.package,
-  }) : super(key: key);
+  });
 
   @override
   _PaymentScreenState createState() => _PaymentScreenState();

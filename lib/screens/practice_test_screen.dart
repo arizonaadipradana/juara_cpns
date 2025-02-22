@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:juara_cpns/class/practice_package_model.dart';
+import 'package:juara_cpns/class/tryout_package_model.dart';
 import 'package:juara_cpns/screens/payment_screen.dart';
 import 'package:juara_cpns/screens/tryout_screen.dart';
 
@@ -19,11 +20,16 @@ class PracticeTestScreen extends StatelessWidget {
             .toList());
   }
 
-  Stream<DocumentSnapshot> _getTryoutPackage(String packageId) {
+  Stream<List<TryoutPackage>> _getTryoutPackages() {
     return FirebaseFirestore.instance
         .collection('tryout_packages')
-        .doc(packageId)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) {
+      print('Debug: Raw data: ${snapshot.docs.map((doc) => doc.data())}'); // Debug raw data
+      return snapshot.docs
+          .map((doc) => TryoutPackage.fromMap(doc.data(), doc.id))
+          .toList();
+    });
   }
 
   @override
@@ -60,44 +66,48 @@ class PracticeTestScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _buildPackageSection( type: "paket-1"),
-            _buildPackageSection(type: "paket-2")
+            _buildPackageSection(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPackageSection({
-    required String type,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          StreamBuilder<DocumentSnapshot>(
-            stream: _getTryoutPackage(type),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
+  Widget _buildPackageSection() {
+    return StreamBuilder<List<TryoutPackage>>(
+      stream: _getTryoutPackages(),
+      builder: (BuildContext context, AsyncSnapshot<List<TryoutPackage>> snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-              if (!snapshot.hasData || !snapshot.data!.exists) {
-                return const Center(child: Text('Paket tidak tersedia'));
-              }
+        final packages = snapshot.data ?? [];
 
-              final packageData =
-              snapshot.data!.data() as Map<String, dynamic>;
-              return _buildPackageCard(context, packageData);
-            },
-          ),
-        ]),
-      ),
+        if (packages.isEmpty) {
+          print('Debug: No packages found. Snapshot data: ${snapshot.data}');
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  const Center(child: Text('Belum ada paket tersedia')),
+                  Text('Status: ${snapshot.connectionState}'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: packages
+              .map((package) => _buildPackageCard(context, package))
+              .toList(),
+        );
+      },
     );
   }
 
@@ -182,25 +192,8 @@ class PracticeTestScreen extends StatelessWidget {
   }
 
   Widget _buildPackageCard(
-      BuildContext context, Map<String, dynamic> packageData) {
-    final questions = packageData['questions'] as Map<String, dynamic>;
-
-    // Create a PracticePackage instance from the package data
-    final package = PracticePackage(
-      id: packageData['id'] ?? '',
-      title: packageData['name'] ?? 'Paket Tryout',
-      type: 'FULL',
-      questionCount: (questions['TWK'] ?? 0) +
-          (questions['TIU'] ?? 0) +
-          (questions['TKP'] ?? 0),
-      duration: packageData['duration'] ?? 0,
-      isLocked: packageData['isLocked'] ?? true,
-      price: packageData['price'] ?? 0,
-      order: packageData['order'] ?? 0,
-      isActive: packageData['isActive'] ?? true,
-      lastUpdated: (packageData['lastUpdated'] as Timestamp?)?.toDate() ??
-          DateTime.now(),
-    );
+      BuildContext context, TryoutPackage package) {
+    final questions = package.questions;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -210,14 +203,14 @@ class PracticeTestScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              packageData['name'] ?? 'Paket Tryout',
+              package.name,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
-            Text(packageData['description'] ?? ''),
+            Text(package.description),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -228,19 +221,19 @@ class PracticeTestScreen extends StatelessWidget {
                       Text('TWK: ${questions['TWK']} soal'),
                       Text('TIU: ${questions['TIU']} soal'),
                       Text('TKP: ${questions['TKP']} soal'),
-                      Text('Durasi: ${packageData['duration']} menit'),
+                      Text('Durasi: ${package.duration} menit'),
                     ],
                   ),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (packageData['isLocked'] == true) {
+                    if (package.isLocked == true) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => PaymentScreen(
                             package:
-                                package, // Pass the PracticePackage instead of Map
+                                package.toPracticePackage(), // Pass the PracticePackage instead of Map
                           ),
                         ),
                       );
@@ -250,15 +243,15 @@ class PracticeTestScreen extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => TryoutScreen(
                             type: 'FULL',
-                            packageId: packageData['id'],
+                            packageId: package.id,
                           ),
                         ),
                       );
                     }
                   },
                   child: Text(
-                    packageData['isLocked'] == true
-                        ? 'Beli Rp${packageData['price']}'
+                    package.isLocked == true
+                        ? 'Beli Rp${package.price}'
                         : 'Mulai',
                   ),
                 ),

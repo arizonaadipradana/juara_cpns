@@ -66,3 +66,18 @@ class TryoutPackage {
     );
   }
 }
+
+class TryoutPackageService {
+  final _firestore = FirebaseFirestore.instance;
+
+  Stream<List<TryoutPackage>> getTryoutPackages() {
+    return _firestore
+        .collection('tryout_packages')
+        .where('isActive', isEqualTo: true)
+        .orderBy('order')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+        .map((doc) => TryoutPackage.fromMap(doc.data(), doc.id))
+        .toList());
+  }
+}

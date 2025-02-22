@@ -9,8 +9,9 @@ import 'package:juara_cpns/screens/result_screen.dart';
 class TryoutScreen extends StatefulWidget {
   final String type;
   final String? packageId;
+  final Set<String> markedQuestions = {};
 
-  const TryoutScreen({
+  TryoutScreen({
     super.key,
     required this.type,
     this.packageId,
@@ -201,6 +202,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
         'packageId': widget.packageId,
         'type': widget.type,
         'answers': userAnswers,
+        'markedQuestions': widget.markedQuestions.toList(), // Add this line
         'lastQuestionIndex': currentQuestionIndex,
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -238,6 +240,11 @@ class _TryoutScreenState extends State<TryoutScreen> {
     });
   }
 
+  double _calculateProgress() {
+    if (questions.isEmpty) return 0.0;
+    return userAnswers.length / questions.length;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -248,6 +255,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
+
 
     if (errorMessage != null) {
       return Scaffold(
@@ -301,8 +309,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 '${remainingSeconds ~/ 60}:${(remainingSeconds % 60).toString().padLeft(2, '0')}',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -310,9 +317,31 @@ class _TryoutScreenState extends State<TryoutScreen> {
       ),
       body: Column(
         children: [
-          LinearProgressIndicator(
-            value: (currentQuestionIndex + 1) / totalQuestions,
+          Column(
+            children: [
+              LinearProgressIndicator(
+                value: _calculateProgress(),
+                backgroundColor: Colors.grey[200],
+                color: Colors.green, // Use green to match answered questions
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${userAnswers.length}/$totalQuestions soal dijawab',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          _buildQuestionIndicators(), // Add this line
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -387,6 +416,139 @@ class _TryoutScreenState extends State<TryoutScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _markQuestions(List<Question> question){
+    return ElevatedButton.icon(
+      onPressed: () {
+        setState(() {
+          if (widget.markedQuestions.contains(question[currentQuestionIndex].id)) {
+            widget.markedQuestions.remove(question[currentQuestionIndex].id);
+          } else {
+            widget.markedQuestions.add(question[currentQuestionIndex].id);
+          }
+        });
+        saveProgress(); // Update to include marked questions
+      },
+      icon: Icon(
+        widget.markedQuestions.contains(question[currentQuestionIndex].id)
+            ? Icons.bookmark
+            : Icons.bookmark_border,
+      ),
+      label: Text(
+          widget.markedQuestions.contains(question[currentQuestionIndex].id)
+              ? 'Hapus Tanda'
+              : 'Tandai Soal'
+      )
+    );
+  }
+
+  Widget _buildQuestionIndicators() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          const Text(
+            'Status Soal:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(
+              questions.length,
+                  (index) {
+                final question = questions[index];
+                Color backgroundColor;
+                Color textColor = Colors.white;
+
+                if (widget.markedQuestions.contains(question.id)) {
+                  backgroundColor = Colors.orange; // Marked question
+                } else if (userAnswers.containsKey(question.id)) {
+                  backgroundColor = Colors.green; // Answered
+                } else {
+                  backgroundColor = Colors.grey.shade300; // Unanswered
+                  textColor = Colors.black;
+                }
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      currentQuestionIndex = index;
+                    });
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        if (index == currentQuestionIndex)
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _markQuestions(questions),
+              const SizedBox(width: 16),
+              _buildIndicatorLegend(Colors.green, 'Sudah dijawab'),
+              const SizedBox(width: 16),
+              _buildIndicatorLegend(Colors.orange, 'Ditandai'),
+              const SizedBox(width: 16),
+              _buildIndicatorLegend(Colors.grey.shade300, 'Belum dijawab'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndicatorLegend(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12),
+        ),
+      ],
     );
   }
 

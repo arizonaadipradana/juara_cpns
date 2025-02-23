@@ -45,6 +45,16 @@ class PracticeTestScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
+            const Text(
+              'Paket Tryout Lengkap',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildPackageSection(),
+            const Divider(height: 32),
             _buildPracticeSection(
               title: 'TWK - Tes Wawasan Kebangsaan',
               type: 'TWK',
@@ -57,16 +67,6 @@ class PracticeTestScreen extends StatelessWidget {
               title: 'TKP - Tes Karakteristik Pribadi',
               type: 'TKP',
             ),
-            const Divider(height: 32),
-            const Text(
-              'Paket Tryout Lengkap',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildPackageSection(),
           ],
         ),
       ),

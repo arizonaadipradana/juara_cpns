@@ -1,4 +1,5 @@
 // lib/screens/payment_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,12 +21,90 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   String selectedPaymentMethod = 'bca';
   bool isProcessing = false;
+  String promoCode = '';
+  int? promoDiscount;
+  bool isValidatingPromo = false;
+  String? promoError;
 
   final paymentMethods = [
     {'id': 'bca', 'name': 'BCA Virtual Account', 'logo': 'assets/bca_logo.png'},
     {'id': 'bni', 'name': 'BNI Virtual Account', 'logo': 'assets/bni_logo.png'},
     {'id': 'mandiri', 'name': 'Mandiri Virtual Account', 'logo': 'assets/mandiri_logo.png'},
   ];
+
+  // Calculate final price after discount
+  int get finalPrice {
+    if (promoDiscount == null) return widget.package.price;
+    return widget.package.price - promoDiscount!;
+  }
+
+  Future<void> validatePromoCode() async {
+    if (promoCode.isEmpty) return;
+
+    setState(() {
+      isValidatingPromo = true;
+      promoError = null;
+      promoDiscount = null;
+    });
+
+    try {
+      if (kDebugMode) {
+        print('Validating promo code: $promoCode');
+      }
+
+      final promoSnapshot = await FirebaseFirestore.instance
+          .collection('promos')
+          .where('code', isEqualTo: promoCode.trim().toUpperCase())
+          .where('isActive', isEqualTo: true)
+          .where('validUntil', isGreaterThan: Timestamp.now())
+          .get();
+
+      if (kDebugMode) {
+        print('Found ${promoSnapshot.docs.length} matching promos');
+      } // For debugging
+
+      if (promoSnapshot.docs.isEmpty) {
+        setState(() {
+          promoError = 'Kode promo tidak valid atau sudah kadaluarsa';
+        });
+        return;
+      }
+
+      final promoData = promoSnapshot.docs.first.data();
+
+      // Verify the data type and cast safely
+      final discountAmount = promoData['discountAmount'];
+      if (discountAmount is! int) {
+        throw Exception('Invalid discount amount type: ${discountAmount.runtimeType}');
+      }
+
+      setState(() {
+        promoDiscount = discountAmount;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kode promo berhasil digunakan!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error validating promo: $e');
+      } // For debugging
+      setState(() {
+        promoError = 'Gagal memvalidasi kode promo. Silakan coba lagi.';
+      });
+    } finally {
+      setState(() {
+        isValidatingPromo = false;
+      });
+    }
+  }
 
   Future<void> processPayment() async {
     setState(() {
@@ -38,20 +117,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('User not logged in');
       }
 
-      // Create payment record
       final payment = await FirebaseFirestore.instance
           .collection('payments')
           .add({
         'userId': user.uid,
         'packageId': widget.package.id,
-        'amount': widget.package.price,
+        'originalAmount': widget.package.price,
+        'promoCode': promoCode.isNotEmpty ? promoCode : null,
+        'promoDiscount': promoDiscount,
+        'finalAmount': finalPrice,
         'status': 'pending',
         'paymentMethod': selectedPaymentMethod,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // In a real app, you would integrate with a payment gateway here
-      // For demo purposes, we'll simulate a successful payment
+      // Simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
 
       // Update payment status
@@ -73,7 +153,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       });
 
       if (mounted) {
-        // Show success dialog
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -83,7 +162,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -150,14 +229,85 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (promoDiscount != null) ...[
+                      Text(
+                        'Rp${widget.package.price}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          decoration: TextDecoration.lineThrough,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
-                      'Rp${widget.package.price}',
+                      'Rp$finalPrice',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.blue,
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Promo code section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Kode Promo',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            onChanged: (value) {
+                              setState(() {
+                                promoCode = value;
+                                promoError = null;
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Masukkan kode promo',
+                              errorText: promoError,
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: isValidatingPromo ? null : validatePromoCode,
+                          child: isValidatingPromo
+                              ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                              : const Text('Gunakan'),
+                        ),
+                      ],
+                    ),
+                    if (promoDiscount != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Potongan: Rp$promoDiscount',
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

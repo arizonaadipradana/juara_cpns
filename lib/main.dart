@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/class/platform_ui.dart';
 import 'package:juara_cpns/screens/auth_screen.dart';
 import 'package:juara_cpns/screens/home_screen.dart';
 import 'package:juara_cpns/screens/practice_test_screen.dart';
@@ -70,29 +71,54 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Beranda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Latihan Soal',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'Materi',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (PlatformUI.isWeb && constraints.maxWidth > 768) {
+            // Web layout with navigation rail
+            return Row(
+              children: [
+                WebNavigationRail(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onItemTapped,
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(
+                  child: ResponsiveContainer(
+                    child: _screens[_selectedIndex],
+                  ),
+                ),
+              ],
+            );
+          } else {
+            // Mobile layout with bottom navigation
+            return Scaffold(
+              body: _screens[_selectedIndex],
+              bottomNavigationBar: BottomNavigationBar(
+                items: const <BottomNavigationBarItem>[
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home),
+                    label: 'Beranda',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.assignment),
+                    label: 'Latihan Soal',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.book),
+                    label: 'Materi',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person),
+                    label: 'Profil',
+                  ),
+                ],
+                currentIndex: _selectedIndex,
+                onTap: _onItemTapped,
+                type: BottomNavigationBarType.fixed,
+              ),
+            );
+          }
+        },
       ),
     );
   }

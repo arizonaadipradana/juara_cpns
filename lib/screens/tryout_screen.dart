@@ -446,7 +446,7 @@ class _TryoutScreenState extends State<TryoutScreen> {
 
   Widget _buildQuestionIndicators() {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -513,13 +513,11 @@ class _TryoutScreenState extends State<TryoutScreen> {
               },
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _markQuestions(questions),
-              const SizedBox(width: 16),
               _buildIndicatorLegend(Colors.green, 'Sudah dijawab'),
               const SizedBox(width: 16),
               _buildIndicatorLegend(Colors.orange, 'Ditandai'),
@@ -527,6 +525,8 @@ class _TryoutScreenState extends State<TryoutScreen> {
               _buildIndicatorLegend(Colors.grey.shade300, 'Belum dijawab'),
             ],
           ),
+          const SizedBox(height: 8),
+          _markQuestions(questions),
         ],
       ),
     );

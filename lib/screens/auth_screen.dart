@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:juara_cpns/main.dart';
 import 'package:juara_cpns/screens/help_screen.dart';
+import 'package:juara_cpns/screens/information_screen.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
 import 'package:juara_cpns/widgets//custom_button.dart';
 import 'package:juara_cpns/widgets//responsive_builder.dart';
@@ -79,6 +80,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           'phoneNumber': _phoneNumber.trim(),
           'createdAt': FieldValue.serverTimestamp(),
           'lastUpdated': FieldValue.serverTimestamp(),
+          'isProfileComplete': false, // Add this field
         });
         print('User profile created successfully');
       }
@@ -88,7 +90,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     }
   }
 
-  void _submit() async {
+  // In lib/screens/auth_screen.dart, find the _submit() method and modify it
+// Particularly the sign up section to redirect to InformationScreen
+
+  Future<void> _submit() async {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) return;
 
@@ -111,6 +116,28 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               .update({
             'lastLogin': FieldValue.serverTimestamp(),
           });
+
+          // Check if profile is complete
+          final userDoc = await _firestore
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .get();
+
+          final userData = userDoc.data();
+          final isProfileComplete = userData?['isProfileComplete'] ?? false;
+
+          // Navigate to the appropriate screen
+          if (mounted) {
+            if (isProfileComplete) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (ctx) => const MainScreen()),
+              );
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (ctx) => const InformationScreen()),
+              );
+            }
+          }
         }
       } else {
         // Sign up
@@ -122,14 +149,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         // Create user profile in Firestore
         if (userCredential.user != null) {
           await _createUserProfile(userCredential.user!);
-        }
-      }
 
-      // Navigate to main screen on success
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (ctx) => const MainScreen()),
-        );
+          // Navigate to InformationScreen for new users
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (ctx) => const InformationScreen()),
+            );
+          }
+        }
       }
     } on FirebaseAuthException catch (error) {
       // Show error message

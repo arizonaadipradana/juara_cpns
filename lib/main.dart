@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:juara_cpns/class/platform_ui.dart';
 import 'package:juara_cpns/screens/auth_screen.dart';
 import 'package:juara_cpns/screens/home_screen.dart';
+import 'package:juara_cpns/screens/information_screen.dart';
 import 'package:juara_cpns/screens/practice_test_screen.dart';
 import 'package:juara_cpns/screens/profile_screen.dart';
 import 'package:juara_cpns/screens/learning_material_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
 import 'firebase_options.dart';
 
@@ -29,9 +31,33 @@ class JuaraCPNSApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (ctx, snapshot) {
-          if (snapshot.hasData) {
-            return const MainScreen();
+        builder: (ctx, userSnapshot) {
+          if (userSnapshot.hasData) {
+            // User is logged in, check if profile is complete
+            return FutureBuilder(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(userSnapshot.data!.uid)
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                final userData = snapshot.data?.data();
+                final isProfileComplete = userData?['isProfileComplete'] ?? false;
+
+                if (isProfileComplete) {
+                  return const MainScreen();
+                } else {
+                  return const InformationScreen();
+                }
+              },
+            );
           }
           return const AuthScreen();
         },

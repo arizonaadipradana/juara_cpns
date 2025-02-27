@@ -487,16 +487,18 @@ class _TryoutScreenState extends State<TryoutScreen> with SingleTickerProviderSt
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min, // Use min to prevent overflow
           children: [
-            Lottie.asset(
-              'assets/animations/loading.json',
-              width: 200,
-              height: 200,
+            CircularProgressIndicator(
+              color: AppTheme.primaryColor,
             ),
             const SizedBox(height: 24),
             Text(
               'Mempersiapkan soal ${widget.type}...',
-              style: AppTheme.textTheme.titleLarge,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             const SizedBox(
@@ -511,6 +513,7 @@ class _TryoutScreenState extends State<TryoutScreen> with SingleTickerProviderSt
       ),
     );
   }
+
 
   Widget _buildErrorScreen() {
     return Scaffold(

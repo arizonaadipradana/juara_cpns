@@ -7,6 +7,7 @@ import 'package:juara_cpns/screens/profile_screen.dart';
 import 'package:juara_cpns/screens/learning_material_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:juara_cpns/theme/app_theme.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -24,14 +25,8 @@ class JuaraCPNSApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Juara CPNS',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
       home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (ctx, snapshot) {
@@ -52,8 +47,10 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -62,64 +59,100 @@ class _MainScreenState extends State<MainScreen> {
     const ProfileScreen(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+
     setState(() {
+      _controller.reset();
       _selectedIndex = index;
+      _controller.forward();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (PlatformUI.isWeb && constraints.maxWidth > 768) {
-            // Web layout with navigation rail
-            return Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (PlatformUI.isWeb && constraints.maxWidth > 768) {
+          // Web layout with modernized navigation rail
+          return Scaffold(
+            backgroundColor: AppTheme.backgroundColor,
+            body: Row(
               children: [
                 WebNavigationRail(
                   selectedIndex: _selectedIndex,
                   onDestinationSelected: _onItemTapped,
                 ),
-                const VerticalDivider(thickness: 1, width: 1),
                 Expanded(
-                  child: ResponsiveContainer(
-                    child: _screens[_selectedIndex],
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Container(
+                      color: AppTheme.backgroundColor,
+                      child: ResponsiveContainer(
+                        child: _screens[_selectedIndex],
+                      ),
+                    ),
                   ),
                 ),
               ],
-            );
-          } else {
-            // Mobile layout with bottom navigation
-            return Scaffold(
-              body: _screens[_selectedIndex],
-              bottomNavigationBar: BottomNavigationBar(
-                items: const <BottomNavigationBarItem>[
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
-                    label: 'Beranda',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.assignment),
-                    label: 'Latihan Soal',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.book),
-                    label: 'Materi',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
-                    label: 'Profil',
-                  ),
-                ],
-                currentIndex: _selectedIndex,
-                onTap: _onItemTapped,
-                type: BottomNavigationBarType.fixed,
+            ),
+          );
+        } else {
+          // Mobile layout with modern bottom navigation
+          return Scaffold(
+            backgroundColor: AppTheme.backgroundColor,
+            body: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: _screens[_selectedIndex],
               ),
-            );
-          }
-        },
-      ),
+            ),
+            bottomNavigationBar: ModernBottomNavBar(
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+            ),
+          );
+        }
+      },
+    );
+  }
+}
+
+// Helper widget for screen transitions
+class ScreenTransition extends StatelessWidget {
+  final Widget child;
+  final Animation<double> animation;
+
+  const ScreenTransition({
+    Key? key,
+    required this.child,
+    required this.animation,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: animation,
+      child: child,
     );
   }
 }

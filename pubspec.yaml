@@ -49,6 +49,8 @@ dev_dependencies:
   percent_indicator: ^4.2.4
   shimmer: ^3.0.0
   url_launcher: 6.3.1
+  image_picker: 1.1.2
+  firebase_storage: 12.4.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

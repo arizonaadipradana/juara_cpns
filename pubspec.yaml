@@ -43,7 +43,9 @@ dev_dependencies:
   firebase_core: ^3.11.0
   firebase_auth: ^5.4.2
   cloud_firestore: ^5.6.3
-  google_fonts: ^3.0.1
+  google_fonts: ^6.2.1
+  lottie: ^1.2.0
+  flutter_svg: ^1.0.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

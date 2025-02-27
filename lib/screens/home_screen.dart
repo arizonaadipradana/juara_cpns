@@ -346,7 +346,7 @@ class HomeScreen extends StatelessWidget {
                   context,
                   'Materi TWK',
                   'Tes Wawasan Kebangsaan',
-                  'assets/images/indonesia.png',
+                  'images/indonesia.svg',
                   const Color(0xFF64DFDF),
                   onTap: () {
                     Navigator.push(
@@ -361,7 +361,7 @@ class HomeScreen extends StatelessWidget {
                   context,
                   'Materi TIU',
                   'Tes Intelegensi Umum',
-                  'assets/images/brain.png',
+                  'images/brain.svg',
                   const Color(0xFFFF5C8D),
                   onTap: () {
                     Navigator.push(
@@ -376,7 +376,7 @@ class HomeScreen extends StatelessWidget {
                   context,
                   'Materi TKP',
                   'Tes Karakteristik Pribadi',
-                  'assets/images/personality.png',
+                  'images/personality.svg',
                   const Color(0xFFFFBD69),
                   onTap: () {
                     Navigator.push(

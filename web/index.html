@@ -18,7 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Sebuah platform tentang serba-serbi tes CPNS">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -34,5 +34,45 @@
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-analytics.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7my9e-nbEDQRouPIA0WHoG6f8xBY5Dsw",
+      authDomain: "juara-cpns.firebaseapp.com",
+      projectId: "juara-cpns",
+      storageBucket: "juara-cpns.firebasestorage.app",
+      messagingSenderId: "359125944960",
+      appId: "1:359125944960:web:0588e00e093159c87ef465",
+      measurementId: "G-G7QY8NYGX1"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+  </script>
+<!--  <script>-->
+<!--    window.addEventListener('load', function() {-->
+<!--      _flutter.loader.load({-->
+<!--        serviceWorker: {-->
+<!--          serviceWorkerVersion: serviceWorkerVersion,-->
+<!--        },-->
+<!--        onEntrypointLoaded: function(engineInitializer) {-->
+<!--          engineInitializer.initializeEngine({-->
+<!--            useColorEmoji: true,-->
+<!--            renderer: "html"  // Set renderer to HTML here-->
+<!--          }).then(function(appRunner) {-->
+<!--            appRunner.runApp();-->
+<!--          });-->
+<!--        }-->
+<!--      });-->
+<!--    });-->
+<!--  </script>-->
 </body>
 </html>

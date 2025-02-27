@@ -1,6 +1,7 @@
 // Create a utility class to handle platform-specific UI logic
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/screens/help_screen.dart';
 
 class PlatformUI {
   static bool get isWeb => kIsWeb;
@@ -196,8 +197,13 @@ class WebNavigationRail extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: NavButton(
                 icon: Icons.help_outline_rounded,
-                label: 'Bantuan',
-                onTap: () {},
+                label: 'Pusat Bantuan',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelpScreen()),
+                  );
+                },
                 isSelected: false,
               ),
             ),

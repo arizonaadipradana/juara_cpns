@@ -3,11 +3,12 @@ import 'package:juara_cpns/theme/app_theme.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback onPressed;  // <-- Ini mengharapkan fungsi non-nullable
   final bool isLoading;
   final bool isPrimary;
   final bool isFullWidth;
   final IconData? icon;
+  final bool disabled;  // <-- Property ini ditambahkan
 
   const CustomButton({
     Key? key,
@@ -17,6 +18,7 @@ class CustomButton extends StatelessWidget {
     this.isPrimary = true,
     this.isFullWidth = true,
     this.icon,
+    this.disabled = false,  // <-- Default value
   }) : super(key: key);
 
   @override
@@ -49,12 +51,15 @@ class CustomButton extends StatelessWidget {
       width: isFullWidth ? double.infinity : null,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        boxShadow: isPrimary ? AppTheme.buttonShadow : null,
+        boxShadow: isPrimary && !disabled ? AppTheme.buttonShadow : null,
       ),
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: buttonStyle,
-        child: buttonContent,
+      child: Opacity(
+        opacity: disabled ? 0.5 : 1.0,  // <-- Gunakan opacity untuk tampilan disabled
+        child: ElevatedButton(
+          onPressed: disabled ? null : onPressed,  // <-- Gunakan null untuk disabled
+          style: buttonStyle,
+          child: buttonContent,
+        ),
       ),
     );
   }

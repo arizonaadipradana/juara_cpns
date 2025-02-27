@@ -436,6 +436,7 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
             ),
             const SizedBox(height: 16),
             CustomButton(
+              disabled: false,
               text: 'Coba Lagi',
               onPressed: () {
                 setState(() {});
@@ -585,6 +586,7 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
             const SizedBox(height: 16),
             // Action button
             CustomButton(
+              disabled: false,
               text: package.isLocked ? 'Beli Sekarang' : 'Mulai Tryout',
               isPrimary: true,
               isFullWidth: true,

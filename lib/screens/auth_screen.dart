@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:juara_cpns/main.dart';
+import 'package:juara_cpns/screens/help_screen.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
 import 'package:juara_cpns/widgets//custom_button.dart';
 import 'package:juara_cpns/widgets//responsive_builder.dart';
@@ -20,6 +22,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   final _formKey = GlobalKey<FormState>();
   var _isLogin = true;
   var _isLoading = false;
+  var _termsAccepted = false;
   String _email = '';
   String _password = '';
   String _username = '';
@@ -242,7 +245,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             return null;
                           },
                           decoration: const InputDecoration(
-                            labelText: 'Nama Lengkap',
+                            labelText: 'Nama Lengkap. Cth: "Bachtiar Rachmanto"',
                             prefixIcon: Icon(Icons.person_outline),
                           ),
                           onSaved: (value) {
@@ -261,10 +264,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           decoration: const InputDecoration(
                             labelText: 'Nomor Telepon',
                             prefixIcon: Icon(Icons.phone_outlined),
+                            prefixText: "+62",
+                            prefixStyle: TextStyle(color: Colors.black)
                           ),
                           keyboardType: TextInputType.phone,
                           onSaved: (value) {
-                            _phoneNumber = value ?? '';
+                            _phoneNumber = '+62${value ?? ''}';
                           },
                         ),
                         const SizedBox(height: 16),
@@ -320,13 +325,78 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       ),
                     ),
 
+                  // Tambahkan checkbox persetujuan Terms and Conditions untuk halaman pendaftaran
+                  if (!_isLogin)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: _termsAccepted,
+                              activeColor: AppTheme.primaryColor,
+                              onChanged: (value) {
+                                setState(() {
+                                  _termsAccepted = value ?? false;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: AppTheme.textTheme.bodySmall?.copyWith(
+                                  color: AppTheme.textSecondaryColor,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                    text: 'Saya menyetujui ',
+                                  ),
+                                  TextSpan(
+                                    text: 'Terms and Conditions',
+                                    style: AppTheme.textTheme.bodySmall?.copyWith(
+                                      color: AppTheme.primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const HelpScreen(),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text: ' Juara CPNS',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   const SizedBox(height: 32),
 
                   CustomButton(
                     text: _isLogin ? 'Login' : 'Daftar',
-                    onPressed: _submit,
+                    onPressed: () {
+                      if (_isLogin || _termsAccepted) {
+                        _submit();
+                      }
+                    },
                     isLoading: _isLoading,
                     icon: _isLogin ? Icons.login : Icons.person_add,
+                    // Tombol menjadi disabled jika terms belum dicentang
+                    disabled: !_isLogin && !_termsAccepted,
                   ),
 
                   const SizedBox(height: 24),

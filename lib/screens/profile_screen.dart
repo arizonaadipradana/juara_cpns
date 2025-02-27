@@ -340,6 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
             isPrimary: false,
             icon: Icons.edit_outlined,
+            disabled: false,
           ),
         ],
       ),
@@ -780,6 +781,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 CustomButton(
                   text: 'Renew Plan',
                   isPrimary: false,
+                  disabled: false,
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

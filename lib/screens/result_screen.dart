@@ -48,6 +48,7 @@ class ResultScreen extends StatelessWidget {
                   CustomButton(
                     text: 'Kembali ke Menu',
                     onPressed: () => Navigator.of(context).pop(),
+                    disabled: false
                   ),
                 ],
               ),

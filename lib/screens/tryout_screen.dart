@@ -547,6 +547,7 @@ class _TryoutScreenState extends State<TryoutScreen> with SingleTickerProviderSt
               ),
               const SizedBox(height: 24),
               CustomButton(
+                disabled: false,
                 text: 'Kembali',
                 onPressed: () {
                   Navigator.pop(context);
@@ -729,6 +730,7 @@ class _TryoutScreenState extends State<TryoutScreen> with SingleTickerProviderSt
             _buildIndicatorLegend(),
             const SizedBox(height: 16),
             CustomButton(
+              disabled: false,
               text: widget.markedQuestions.contains(questions[currentQuestionIndex].id)
                   ? 'Hapus Tanda'
                   : 'Tandai Soal',

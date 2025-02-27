@@ -96,6 +96,7 @@ class _HelpScreenState extends State<HelpScreen>
                 },
                 icon: Icons.arrow_back,
                 isPrimary: true,
+                disabled: false,
               ),
             ],
           ),

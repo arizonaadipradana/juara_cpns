@@ -326,6 +326,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
         actions: [
           CustomButton(
+            disabled: false,
             text: confirmText,
             onPressed: onConfirm,
             isFullWidth: true,
@@ -751,6 +752,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                     // Payment button
                     CustomButton(
+                      disabled: false,
                       text: 'Bayar Sekarang',
                       onPressed: isProcessing ? () {} : processPayment,
                       isLoading: isProcessing,

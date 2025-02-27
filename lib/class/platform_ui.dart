@@ -21,7 +21,7 @@ class PlatformUI {
   static bool isMobileWidth(double width) => width <= 768;
 }
 
-// Custom widget for responsive container
+// Custom widgets for responsive container
 class ResponsiveContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;

@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:juara_cpns/main.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
-import 'package:juara_cpns/theme/custom_button.dart';
-import 'package:juara_cpns/theme/responsive_builder.dart';
+import 'package:juara_cpns/widgets//custom_button.dart';
+import 'package:juara_cpns/widgets//responsive_builder.dart';
 import 'package:lottie/lottie.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -395,9 +394,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               const SizedBox(height: 40),
                               // Add illustration
                               Center(
-                                child: Lottie.asset(
-                                  'lib/assets/student_header.json',
-                                  height: 320,
+                                child: Lottie.network(
+                                  'https://raw.githubusercontent.com/arizonaadipradana/juara_cpns/refs/heads/master/lib/assets/student_header.json',
+                                  height: 500,
                                 ),
                               ),
                             ],

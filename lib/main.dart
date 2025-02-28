@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/class/platform_ui.dart';
 import 'package:juara_cpns/screens/auth_screen.dart';
 import 'package:juara_cpns/screens/home_screen.dart';
@@ -28,6 +29,8 @@ class JuaraCPNSApp extends StatelessWidget {
     return MaterialApp(
       title: 'Juara CPNS',
       theme: AppTheme.lightTheme,
+      initialRoute: '/',
+      onGenerateRoute: AppRouter.generateRoute,
       debugShowCheckedModeBanner: false,
       home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),

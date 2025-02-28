@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -82,16 +80,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _pickAndUploadImage(ImageSource source) async {
-    print("DEBUG: Picking image from $source");
-
+  Future<void> _pickAndUploadImage(ImageSource source) async {
     try {
       setState(() {
         _isUploadingImage = true;
       });
 
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
+      // Pick the image
+      final XFile? image = await _imagePicker.pickImage(
         source: source,
         maxWidth: 512,
         maxHeight: 512,
@@ -105,51 +101,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return;
       }
 
-      print("DEBUG: Image selected: ${image.path}");
-
       // Get current user
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         setState(() => _isUploadingImage = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('User not authenticated'),
+              backgroundColor: Colors.red),
+        );
         return;
       }
 
-      print("DEBUG: User ID: ${user.uid}");
+      // Use a unique filename with user ID as the prefix
+      final fileName = 'profile_${user.uid}.jpg';
 
-      // Use a unique filename with timestamp to avoid caching issues
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = '${user.uid}_$timestamp.jpg';
-
+// Create storage reference with a proper path structure
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('profile_images')
+          .child(user.uid) // Add user ID as a subfolder for better organization
           .child(fileName);
 
-      print("DEBUG: Storage reference created with filename: $fileName");
+      // Read the image as bytes (works for both web and mobile)
+      final bytes = await image.readAsBytes();
+
+      // For uploads, specify metadata
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        cacheControl: 'public, max-age=86400', // 24 hours caching
+      );
 
       try {
-        // Read the image as bytes (works for both platforms)
-        final bytes = await image.readAsBytes();
-        print("DEBUG: Image bytes read: ${bytes.length} bytes");
-
-        // For web uploads, we need to specify content type
-        final metadata = SettableMetadata(
-          contentType: 'image/jpeg',
-          cacheControl: 'no-cache',
-        );
-
-        // Upload the image bytes
+        // Upload with error handling
         final uploadTask = storageRef.putData(bytes, metadata);
-        print("DEBUG: Upload task created with metadata");
 
-        // Wait for the upload to complete without tracking progress
-        // This avoids potential issues with progress tracking
-        final snapshot = await uploadTask;
-        print("DEBUG: Upload completed successfully");
+        // Listen for state changes, errors, and completion
+        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+          if (mounted) {
+            // You could show upload progress here if needed
+            // final progress = snapshot.bytesTransferred / snapshot.totalBytes;
+          }
+        }, onError: (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Upload error: ${e.toString()}'),
+                  backgroundColor: Colors.red),
+            );
+            setState(() {
+              _isUploadingImage = false;
+            });
+          }
+        });
 
-        // Get the download URL
-        final downloadUrl = await snapshot.ref.getDownloadURL();
-        print("DEBUG: Download URL obtained: $downloadUrl");
+        // Wait for upload completion
+        await uploadTask;
+
+        // Get download URL
+        final downloadUrl = await storageRef.getDownloadURL();
 
         // Update Firestore with the URL
         await FirebaseFirestore.instance
@@ -160,41 +170,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'lastUpdated': FieldValue.serverTimestamp(),
         });
 
-        print("DEBUG: Firestore updated with new profile image URL");
-
         // Update local state
-        setState(() {
-          // Add cache busting parameter
-          _profileImageUrl = "$downloadUrl&cache=$timestamp";
-          _isUploadingImage = false;
-        });
-
         if (mounted) {
+          setState(() {
+            _profileImageUrl = downloadUrl;
+            _isUploadingImage = false;
+          });
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profile photo updated successfully!'),
               backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
             ),
           );
         }
       } catch (e) {
-        print("DEBUG: Error during file upload: $e");
-        throw e;
+        if (mounted) {
+          print("Firebase storage error details: $e");
+
+          setState(() {
+            _isUploadingImage = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Storage error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      print("DEBUG: Error in _pickAndUploadImage: $e");
-
-      setState(() {
-        _isUploadingImage = false;
-      });
-
       if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error uploading image: ${e.toString()}'),
+            content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -377,6 +392,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Replace the _buildProfileHeader method with this updated version
   Widget _buildProfileHeader(String username, String email) {
     return CustomCard(
       child: Column(
@@ -402,99 +418,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     top: Radius.circular(16),
                   ),
                 ),
+                // Add change profile image button to the top right corner of the header
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.camera_alt,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        _showImageSourceDialog();
+                      },
+                      tooltip: 'Change profile picture',
+                    ),
+                  ),
+                ),
               ),
-              // Profile image with upload button overlay
+              // Profile image
               Positioned(
                 bottom: -40,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Profile image
-                    // Profile image
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 4,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: _isUploadingImage
-                          ? Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      )
-                          : CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
-                        backgroundImage: _profileImageUrl != null
-                            ? NetworkImage(_profileImageUrl!)
-                            : null,
-                        child: _profileImageUrl == null
-                            ? Text(
-                          username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                          ),
-                        )
-                            : null,
-                      ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 4,
                     ),
-
-                    // Overlay with upload button - this is on top of the CircleAvatar
-                    if (!_isUploadingImage)
-                      Material(
-                        color: Colors.black.withOpacity(0.4),
-                        shape: CircleBorder(),
-                        child: InkWell(
-                          onTap: () {
-                            print("Upload button tapped");
-                            _showImageSourceDialog();
-                          },
-                          customBorder: CircleBorder(),
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            alignment: Alignment.center,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  "Change",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                  ],
+                    ],
+                  ),
+                  child: _buildProfileAvatar(username),
                 ),
               ),
             ],
@@ -553,49 +513,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildProfileAvatar(String username) {
     if (_isUploadingImage) {
-      return Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.2),
-          shape: BoxShape.circle,
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const CircularProgressIndicator();
     }
 
-    if (_profileImageUrl != null) {
-      // Use FadeInImage for better loading experience
+    if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
       return ClipOval(
-        child: FadeInImage.assetNetwork(
-          placeholder: 'assets/images/placeholder_avatar.png', // Replace with your placeholder
-          image: _profileImageUrl!,
+        child: SizedBox(
           width: 100,
           height: 100,
-          fit: BoxFit.cover,
-          imageErrorBuilder: (context, error, stackTrace) {
-            print("Error loading profile image: $error");
-            // Return the default avatar on error
-            return CircleAvatar(
-              radius: 50,
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
-              child: Text(
-                username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            );
-          },
+          child:
+          FadeInImage.assetNetwork(
+            placeholder: "assets/images/avatar_placeholder.png",
+            image: _profileImageUrl!,
+            fit: BoxFit.cover,
+            placeholderFit: BoxFit.cover, // Ensure the placeholder also fits properly
+            fadeInDuration: const Duration(milliseconds: 300),
+            imageErrorBuilder: (context, error, stackTrace) {
+              print('Error loading profile image: $error');
+              return _buildDefaultAvatar(username);
+            },
+          ),
         ),
       );
     }
 
-    // Fallback to the initial avatar
+    return _buildDefaultAvatar(username);
+  }
+
+  Widget _buildDefaultAvatar(String username) {
     return CircleAvatar(
       radius: 50,
       backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
@@ -1248,4 +1193,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
+
+
 }

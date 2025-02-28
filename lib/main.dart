@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:html' as html;
 import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/class/platform_ui.dart';
 import 'package:juara_cpns/screens/auth_screen.dart';
 import 'package:juara_cpns/screens/home_screen.dart';
 import 'package:juara_cpns/screens/information_screen.dart';
-import 'package:juara_cpns/screens/practice_test_screen.dart';
 import 'package:juara_cpns/screens/profile_screen.dart';
+import 'package:juara_cpns/screens/practice_test_screen.dart';
 import 'package:juara_cpns/screens/learning_material_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,10 +27,19 @@ class JuaraCPNSApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get current path for initial route (for web)
+    String initialRoute = '/';
+    if (PlatformUI.isWeb) {
+      final path = html.window.location.pathname;
+      if (path != null && path.isNotEmpty && path != '/') {
+        initialRoute = path;
+      }
+    }
+
     return MaterialApp(
       title: 'Juara CPNS',
       theme: AppTheme.lightTheme,
-      initialRoute: '/',
+      initialRoute: initialRoute,
       onGenerateRoute: AppRouter.generateRoute,
       debugShowCheckedModeBanner: false,
       home: StreamBuilder(
@@ -110,6 +120,29 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
 
+    // Update URL path based on selected index
+    String path = '/';
+    switch (index) {
+      case 0:
+        path = AppRouter.home;
+        break;
+      case 1:
+        path = AppRouter.practice;
+        break;
+      case 2:
+        path = AppRouter.learning;
+        break;
+      case 3:
+        path = AppRouter.profile;
+        break;
+    }
+
+    // This updates the URL without actually navigating
+    if (PlatformUI.isWeb) {
+      // Update browser URL
+      html.window.history.pushState(null, '', path);
+    }
+
     setState(() {
       _controller.reset();
       _selectedIndex = index;
@@ -162,26 +195,6 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           );
         }
       },
-    );
-  }
-}
-
-// Helper widget for screen transitions
-class ScreenTransition extends StatelessWidget {
-  final Widget child;
-  final Animation<double> animation;
-
-  const ScreenTransition({
-    Key? key,
-    required this.child,
-    required this.animation,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: animation,
-      child: child,
     );
   }
 }

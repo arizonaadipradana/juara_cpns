@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/main.dart';
 import 'package:juara_cpns/screens/help_screen.dart';
 import 'package:juara_cpns/screens/information_screen.dart';
@@ -392,11 +393,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                     ),
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () {
-                                        Navigator.push(
+                                        Navigator.pushNamed(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const HelpScreen(),
-                                          ),
+                                          AppRouter.help
                                         );
                                       },
                                   ),

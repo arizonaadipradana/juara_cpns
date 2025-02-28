@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/class/practice_package_model.dart';
 import 'package:juara_cpns/class/tryout_package_model.dart';
-import 'package:juara_cpns/screens/payment_screen.dart';
-import 'package:juara_cpns/screens/tryout_screen.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
 import 'package:juara_cpns/widgets/custom_button.dart';
 import 'package:juara_cpns/widgets/custom_card.dart';
@@ -27,7 +26,6 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
     super.initState();
   }
 
-
   Stream<List<PracticePackage>> _getPackagesByType(String type) {
     return FirebaseFirestore.instance
         .collection('practice_packages')
@@ -36,8 +34,8 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
         .orderBy('order')
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => PracticePackage.fromMap(doc.data(), doc.id))
-        .toList());
+            .map((doc) => PracticePackage.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   @override
@@ -138,7 +136,6 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
           ),
           _buildTryoutPackageSection(),
           const SizedBox(height: 24),
-
           const SectionHeader(
             title: 'Latihan per Kategori',
             subtitle: 'Fokus pada area yang perlu ditingkatkan',
@@ -171,7 +168,8 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
   Widget _buildTryoutPackageSection() {
     return StreamBuilder<List<TryoutPackage>>(
       stream: _packageService.getTryoutPackages(),
-      builder: (BuildContext context, AsyncSnapshot<List<TryoutPackage>> snapshot) {
+      builder:
+          (BuildContext context, AsyncSnapshot<List<TryoutPackage>> snapshot) {
         if (snapshot.hasError) {
           return _buildErrorCard('Error: ${snapshot.error}');
         }
@@ -425,29 +423,19 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
     final questions = package.questions;
 
     // Calculate total questions
-    final totalQuestions = questions.values.fold<int>(0, (sum, count) => sum + count);
+    final totalQuestions =
+        questions.values.fold<int>(0, (sum, count) => sum + count);
 
     return CustomCard(
       onTap: () {
         if (package.isLocked) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PaymentScreen(
-                package: package.toPracticePackage(),
-              ),
-            ),
-          );
+          Navigator.pushNamed(context, AppRouter.payment, arguments: {
+            'package': package.toPracticePackage()
+            // Fix: 'package' should be the key
+          });
         } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TryoutScreen(
-                type: 'FULL',
-                packageId: package.id,
-              ),
-            ),
-          );
+          Navigator.pushNamed(context, AppRouter.tryout,
+              arguments: {'type': 'FULL', 'packageId': package.id});
         }
       },
       child: Padding(
@@ -499,9 +487,12 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildQuestionTypeChip('TWK', questions['TWK'] ?? 0, Colors.blue.shade700),
-                _buildQuestionTypeChip('TIU', questions['TIU'] ?? 0, Colors.orange.shade700),
-                _buildQuestionTypeChip('TKP', questions['TKP'] ?? 0, Colors.purple.shade700),
+                _buildQuestionTypeChip(
+                    'TWK', questions['TWK'] ?? 0, Colors.blue.shade700),
+                _buildQuestionTypeChip(
+                    'TIU', questions['TIU'] ?? 0, Colors.orange.shade700),
+                _buildQuestionTypeChip(
+                    'TKP', questions['TKP'] ?? 0, Colors.purple.shade700),
               ],
             ),
             const SizedBox(height: 12),
@@ -560,27 +551,16 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
               text: package.isLocked ? 'Beli Sekarang' : 'Mulai Tryout',
               isPrimary: true,
               isFullWidth: true,
-              icon: package.isLocked ? Icons.shopping_cart_outlined : Icons.play_arrow_outlined,
+              icon: package.isLocked
+                  ? Icons.shopping_cart_outlined
+                  : Icons.play_arrow_outlined,
               onPressed: () {
                 if (package.isLocked) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PaymentScreen(
-                        package: package.toPracticePackage(),
-                      ),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRouter.payment,
+                      arguments: {'package': package.toPracticePackage()});
                 } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TryoutScreen(
-                        type: 'FULL',
-                        packageId: package.id,
-                      ),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRouter.tryout,
+                      arguments: {'type': 'FULL', 'packageId': package.id});
                 }
               },
             ),
@@ -729,7 +709,8 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
     );
   }
 
-  Widget _buildPracticeItem(BuildContext context, PracticePackage package, Color color) {
+  Widget _buildPracticeItem(
+      BuildContext context, PracticePackage package, Color color) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -744,17 +725,24 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           // Navigate to TryoutScreen or PaymentScreen based on isLocked
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => package.isLocked
-                  ? PaymentScreen(package: package)
-                  : TryoutScreen(
-                type: package.type,
-                packageId: package.id,
-              ),
-            ),
-          );
+          if (package.isLocked) {
+            Navigator.pushNamed(
+              context,
+              AppRouter.payment,
+              arguments: {
+                'package': package,
+              },
+            );
+          } else {
+            Navigator.pushNamed(
+              context,
+              AppRouter.tryout,
+              arguments: {
+                'type': package.type,
+                'packageId': package.id,
+              },
+            );
+          }
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -798,7 +786,8 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
@@ -816,7 +805,8 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.successColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),

@@ -8,19 +8,27 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "/tryout/**",
         "destination": "/index.html"
       },
       {
-        "source": "/payment/finish**",
+        "source": "/payment/**",
         "destination": "/index.html"
       },
       {
-        "source": "/payment/error**",
+        "source": "/profile/**",
         "destination": "/index.html"
       },
       {
-        "source": "/payment/pending**",
+        "source": "/practice/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/learning/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/help/**",
         "destination": "/index.html"
       },
       {

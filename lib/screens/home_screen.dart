@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/screens/learning_material_screen.dart';
 import 'package:juara_cpns/screens/practice_test_screen.dart';
 import 'package:juara_cpns/screens/profile_screen.dart';
@@ -70,11 +71,9 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileScreen(),
-                        ),
+                        AppRouter.profile
                       );
                     },
                   ),
@@ -334,11 +333,9 @@ class HomeScreen extends StatelessWidget {
                   'assets/images/exam.png',
                   const Color(0xFF5E60CE),
                   onTap: () {
-                    Navigator.push(
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const PracticeTestScreen(),
-                      ),
+                      AppRouter.practice
                     );
                   },
                 ),
@@ -349,11 +346,9 @@ class HomeScreen extends StatelessWidget {
                   'images/indonesia.svg',
                   const Color(0xFF64DFDF),
                   onTap: () {
-                    Navigator.push(
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const LearningMaterialScreen(),
-                      ),
+                      AppRouter.learning
                     );
                   },
                 ),
@@ -364,11 +359,9 @@ class HomeScreen extends StatelessWidget {
                   'images/brain.svg',
                   const Color(0xFFFF5C8D),
                   onTap: () {
-                    Navigator.push(
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const LearningMaterialScreen(),
-                      ),
+                      AppRouter.learning
                     );
                   },
                 ),
@@ -379,11 +372,9 @@ class HomeScreen extends StatelessWidget {
                   'images/personality.svg',
                   const Color(0xFFFFBD69),
                   onTap: () {
-                    Navigator.push(
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const LearningMaterialScreen(),
-                      ),
+                      AppRouter.learning
                     );
                   },
                 ),

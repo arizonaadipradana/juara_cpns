@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/class/platform_ui.dart';
 import 'package:juara_cpns/class/question_model.dart';
 import 'package:juara_cpns/class/responsive_layout.dart';
@@ -220,20 +221,15 @@ class _TryoutScreenState extends State<TryoutScreen> with SingleTickerProviderSt
         await _animationController?.reverse();
 
         // Navigate to result screen
-        Navigator.pushReplacement(
+        Navigator.pushReplacementNamed(
           context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => ResultScreen(
-              questions: questions,
-              userAnswers: userAnswers,
-              scores: scores,
-              type: widget.type,
-            ),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
+          AppRouter.result,
+          arguments: {
+            'questions': questions,
+            'userAnswers': userAnswers,
+            'scores': scores,
+            'type': widget.type,
+          },
         );
       }
     } catch (e) {
@@ -549,10 +545,14 @@ class _TryoutScreenState extends State<TryoutScreen> with SingleTickerProviderSt
               CustomButton(
                 disabled: false,
                 text: 'Kembali',
-                onPressed: () {
-                  Navigator.pop(context);
-                },
                 isPrimary: true,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                      context,
+                      AppRouter.home,
+                    );
+                  }
               ),
             ],
           ),

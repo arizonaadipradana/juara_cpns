@@ -27,6 +27,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoading = false;
 
+  String _getInitials(String fullName) {
+    List<String> nameParts = fullName.split(' ');
+    String initials = '';
+
+    // Get first letter of first word
+    if (nameParts.isNotEmpty && nameParts[0].isNotEmpty) {
+      initials += nameParts[0][0].toUpperCase();
+    }
+
+    // Get first letter of second word (if it exists)
+    if (nameParts.length > 1 && nameParts[1].isNotEmpty) {
+      initials += nameParts[1][0].toUpperCase();
+    }
+
+    // If we couldn't get two initials, just return the first initial or 'U'
+    return initials.isEmpty ? 'U' : initials;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -543,11 +561,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildDefaultAvatar(String username) {
     return CircleAvatar(
       radius: 50,
-      backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+      backgroundColor: Colors.white,
       child: Text(
-        username.isNotEmpty ? username[0].toUpperCase() : 'U',
+        username.isNotEmpty ? _getInitials(username) : 'U',
         style: const TextStyle(
-          fontSize: 36,
+          fontSize: 40,
           fontWeight: FontWeight.bold,
           color: AppTheme.primaryColor,
         ),

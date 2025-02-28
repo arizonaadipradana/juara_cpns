@@ -20,29 +20,13 @@ class PracticeTestScreen extends StatefulWidget {
 
 class _PracticeTestScreenState extends State<PracticeTestScreen> {
   final ScrollController _scrollController = ScrollController();
-  bool _showScrollToTop = false;
   final TryoutPackageService _packageService = TryoutPackageService();
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_scrollListener);
   }
 
-  @override
-  void dispose() {
-    _scrollController.removeListener(_scrollListener);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _scrollListener() {
-    if (_scrollController.offset > 500 && !_showScrollToTop) {
-      setState(() => _showScrollToTop = true);
-    } else if (_scrollController.offset <= 500 && _showScrollToTop) {
-      setState(() => _showScrollToTop = false);
-    }
-  }
 
   Stream<List<PracticePackage>> _getPackagesByType(String type) {
     return FirebaseFirestore.instance
@@ -64,20 +48,6 @@ class _PracticeTestScreenState extends State<PracticeTestScreen> {
         title: const Text('Latihan Soal'),
         elevation: 0,
       ),
-      floatingActionButton: _showScrollToTop
-          ? FloatingActionButton(
-        mini: true,
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.arrow_upward),
-        onPressed: () {
-          _scrollController.animateTo(
-            0,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        },
-      )
-          : null,
       body: RefreshIndicator(
         onRefresh: () async {
           // Implement refresh logic if needed

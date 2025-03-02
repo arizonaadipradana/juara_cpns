@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
 import 'package:juara_cpns/widgets/custom_button.dart';
 import 'package:juara_cpns/screens/tryout_screen.dart';
@@ -170,14 +171,13 @@ class _PaymentCallbackScreenState extends State<PaymentCallbackScreen> {
           text: 'Mulai Tryout',
           onPressed: () {
             if (widget.packageId != null && widget.packageType != null) {
-              Navigator.pushReplacement(
+              Navigator.pushReplacementNamed(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => TryoutScreen(
-                    type: widget.packageType!,
-                    packageId: widget.packageId!,
-                  ),
-                ),
+                AppRouter.tryout,
+                arguments: {
+                  'type': widget.packageType!,
+                  'packageId': widget.packageId!
+                }
               );
             } else {
               Navigator.of(context).popUntil((route) => route.isFirst);

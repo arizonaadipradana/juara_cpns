@@ -1,20 +1,20 @@
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
-import 'package:flutter/material.dart';
+import 'dart:html' as html;
+// Import untuk web
+import 'dart:js' as js;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:juara_cpns/class/practice_package_model.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/class/platform_ui.dart';
+import 'package:juara_cpns/class/practice_package_model.dart';
 import 'package:juara_cpns/class/responsive_layout.dart';
-import 'package:juara_cpns/screens/tryout_screen.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
 import 'package:juara_cpns/widgets/custom_button.dart';
 import 'package:juara_cpns/widgets/custom_card.dart';
 import 'package:juara_cpns/widgets/responsive_builder.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-// Import untuk web
-import 'dart:js' as js;
-import 'dart:html' as html;
 
 class PaymentScreen extends StatefulWidget {
   final PracticePackage package;
@@ -131,9 +131,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     await Future.delayed(const Duration(seconds: 1));
 
     // Contoh token (Pada implementasi sebenarnya, token harus dari backend)
-    return 'fake-snap-token-for-demo-${DateTime
-        .now()
-        .millisecondsSinceEpoch}';
+    return 'fake-snap-token-for-demo-${DateTime.now().millisecondsSinceEpoch}';
   }
 
   // Buka popup Midtrans SNAP
@@ -142,19 +140,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
       snapToken,
       {
         'onSuccess': js.allowInterop((result) {
-          js.context.callMethod(
-              'onPaymentResult', [{'status': 'success', 'data': result}]);
+          js.context.callMethod('onPaymentResult', [
+            {'status': 'success', 'data': result}
+          ]);
         }),
         'onPending': js.allowInterop((result) {
-          js.context.callMethod(
-              'onPaymentResult', [{'status': 'pending', 'data': result}]);
+          js.context.callMethod('onPaymentResult', [
+            {'status': 'pending', 'data': result}
+          ]);
         }),
         'onError': js.allowInterop((result) {
-          js.context.callMethod(
-              'onPaymentResult', [{'status': 'error', 'data': result}]);
+          js.context.callMethod('onPaymentResult', [
+            {'status': 'error', 'data': result}
+          ]);
         }),
         'onClose': js.allowInterop(() {
-          js.context.callMethod('onPaymentResult', [{'status': 'closed'}]);
+          js.context.callMethod('onPaymentResult', [
+            {'status': 'closed'}
+          ]);
         }),
       }
     ]);
@@ -180,7 +183,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     switch (status) {
       case 'success':
-      // Update status pembayaran menjadi sukses
+        // Update status pembayaran menjadi sukses
         await paymentRef.update({
           'status': 'completed',
           'completedAt': FieldValue.serverTimestamp(),
@@ -188,9 +191,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         });
 
         // Berikan akses ke paket
-        await FirebaseFirestore.instance
-            .collection('user_packages')
-            .add({
+        await FirebaseFirestore.instance.collection('user_packages').add({
           'userId': user.uid,
           'packageId': widget.package.id,
           'purchasedAt': FieldValue.serverTimestamp(),
@@ -210,16 +211,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
             message: 'Selamat! Anda telah berhasil membeli paket tryout ini.',
             onConfirm: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      TryoutScreen(
-                        type: widget.package.type,
-                        packageId: widget.package.id,
-                      ),
-                ),
-              );
+              Navigator.pushReplacementNamed(context, AppRouter.tryout,
+                  arguments: {
+                    'type': widget.package.type,
+                    'packageId': widget.package.id,
+                  });
             },
             confirmText: 'Mulai Tryout',
           );
@@ -227,7 +223,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         break;
 
       case 'pending':
-      // Update status pembayaran menjadi pending
+        // Update status pembayaran menjadi pending
         await paymentRef.update({
           'status': 'pending',
           'updatedAt': FieldValue.serverTimestamp(),
@@ -251,7 +247,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       case 'error':
       case 'closed':
-      // Update status pembayaran menjadi gagal atau dibatalkan
+        // Update status pembayaran menjadi gagal atau dibatalkan
         await paymentRef.update({
           'status': status == 'error' ? 'failed' : 'cancelled',
           'updatedAt': FieldValue.serverTimestamp(),
@@ -331,8 +327,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             margin: EdgeInsets.all(context.horizontalPadding),
           ),
         );
@@ -361,17 +357,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
 
       // Buat ID order unik
-      final String newOrderId = 'JC-${DateTime
-          .now()
-          .millisecondsSinceEpoch}-${user.uid.substring(0, 5)}';
+      final String newOrderId =
+          'JC-${DateTime.now().millisecondsSinceEpoch}-${user.uid.substring(0, 5)}';
       setState(() {
         orderId = newOrderId;
       });
 
       // Buat entri pembayaran di Firestore
-      final payment = await FirebaseFirestore.instance
-          .collection('payments')
-          .add({
+      final payment =
+          await FirebaseFirestore.instance.collection('payments').add({
         'orderId': newOrderId,
         'userId': user.uid,
         'packageId': widget.package.id,
@@ -417,9 +411,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         });
 
         // Give access to the package
-        await FirebaseFirestore.instance
-            .collection('user_packages')
-            .add({
+        await FirebaseFirestore.instance.collection('user_packages').add({
           'userId': user.uid,
           'packageId': widget.package.id,
           'purchasedAt': FieldValue.serverTimestamp(),
@@ -438,16 +430,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
             message: 'Selamat! Anda telah berhasil membeli paket tryout ini.',
             onConfirm: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      TryoutScreen(
-                        type: widget.package.type,
-                        packageId: widget.package.id,
-                      ),
-                ),
-              );
+              Navigator.pushReplacementNamed(context, AppRouter.tryout,
+                  arguments: {
+                    'type': widget.package.type,
+                    'packageId': widget.package.id,
+                  });
             },
             confirmText: 'Mulai Tryout',
           );
@@ -473,8 +460,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             margin: EdgeInsets.all(context.horizontalPadding),
           ),
         );
@@ -492,73 +479,70 @@ class _PaymentScreenState extends State<PaymentScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.successColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                      Icons.check_circle, color: AppTheme.successColor,
-                      size: 28),
-                ),
-                const SizedBox(width: 12),
-                Text(title, style: AppTheme.textTheme.headlineSmall),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                // Success icon animation
-                TweenAnimationBuilder(
-                  duration: const Duration(milliseconds: 800),
-                  tween: Tween<double>(begin: 0, end: 1),
-                  builder: (context, double value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: AppTheme.successColor.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.emoji_events_outlined,
-                          size: 64,
-                          color: AppTheme.successColor,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: AppTheme.textTheme.bodyLarge,
-                ),
-              ],
-            ),
-            actions: [
-              CustomButton(
-                disabled: false,
-                text: confirmText,
-                onPressed: onConfirm,
-                isFullWidth: true,
-                isPrimary: true,
-                icon: Icons.play_arrow_rounded,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.successColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
               ),
-            ],
-            actionsPadding: const EdgeInsets.all(16),
+              child: const Icon(Icons.check_circle,
+                  color: AppTheme.successColor, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Text(title, style: AppTheme.textTheme.headlineSmall),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            // Success icon animation
+            TweenAnimationBuilder(
+              duration: const Duration(milliseconds: 800),
+              tween: Tween<double>(begin: 0, end: 1),
+              builder: (context, double value, child) {
+                return Transform.scale(
+                  scale: value,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppTheme.successColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.emoji_events_outlined,
+                      size: 64,
+                      color: AppTheme.successColor,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTheme.textTheme.bodyLarge,
+            ),
+          ],
+        ),
+        actions: [
+          CustomButton(
+            disabled: false,
+            text: confirmText,
+            onPressed: onConfirm,
+            isFullWidth: true,
+            isPrimary: true,
+            icon: Icons.play_arrow_rounded,
           ),
+        ],
+        actionsPadding: const EdgeInsets.all(16),
+      ),
     );
   }
 
@@ -672,15 +656,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
           message: 'Selamat! Anda telah berhasil membeli paket tryout ini.',
           onConfirm: () {
             Navigator.pop(context);
-            Navigator.pushReplacement(
+            Navigator.pushReplacementNamed(
               context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    TryoutScreen(
-                      type: widget.package.type,
-                      packageId: widget.package.id,
-                    ),
-              ),
+              AppRouter.tryout,
+              arguments: {
+                'type': widget.package.type,
+                'packageId': widget.package.id,
+              },
             );
           },
           confirmText: 'Mulai Tryout',
@@ -701,8 +683,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-                'Pembayaran gagal atau dibatalkan. Silakan coba lagi.'),
+            content:
+                Text('Pembayaran gagal atau dibatalkan. Silakan coba lagi.'),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -727,25 +709,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
       backgroundColor: AppTheme.backgroundColor,
       appBar: PlatformUI.isWeb
           ? PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: Text(
-            'Pembayaran Paket',
-            style: AppTheme.textTheme.headlineSmall,
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-      )
+              preferredSize: const Size.fromHeight(70),
+              child: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                title: Text(
+                  'Pembayaran Paket',
+                  style: AppTheme.textTheme.headlineSmall,
+                ),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back,
+                      color: AppTheme.primaryColor),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            )
           : AppBar(
-        title: const Text('Pembayaran'),
-        elevation: 0,
-        backgroundColor: AppTheme.primaryColor,
-      ),
+              title: const Text('Pembayaran'),
+              elevation: 0,
+              backgroundColor: AppTheme.primaryColor,
+            ),
       body: ResponsiveBuilder(
         builder: (context, constraints, screenSize) {
           return SingleChildScrollView(
@@ -756,9 +739,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             child: Center(
               child: Container(
                 constraints: BoxConstraints(
-                  maxWidth: screenSize.isDesktop ? 800 : (screenSize.isTablet
-                      ? 600
-                      : double.infinity),
+                  maxWidth: screenSize.isDesktop
+                      ? 800
+                      : (screenSize.isTablet ? 600 : double.infinity),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -788,16 +771,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               children: [
                                 Text(
                                   'Ringkasan Pembelian',
-                                  style: AppTheme.textTheme.titleLarge
-                                      ?.copyWith(
+                                  style:
+                                      AppTheme.textTheme.titleLarge?.copyWith(
                                     color: Colors.white,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Paket Latihan Soal CPNS',
-                                  style: AppTheme.textTheme.bodyMedium
-                                      ?.copyWith(
+                                  style:
+                                      AppTheme.textTheme.bodyMedium?.copyWith(
                                     color: Colors.white.withOpacity(0.8),
                                   ),
                                 ),
@@ -814,8 +797,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.accentColor.withOpacity(
-                                            0.1),
+                                        color: AppTheme.accentColor
+                                            .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(
@@ -827,13 +810,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment
-                                            .start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             widget.package.title,
-                                            style: AppTheme.textTheme
-                                                .titleLarge,
+                                            style:
+                                                AppTheme.textTheme.titleLarge,
                                           ),
                                           const SizedBox(height: 4),
                                           Row(
@@ -841,29 +824,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                               Icon(
                                                 Icons.timer_outlined,
                                                 size: 16,
-                                                color: AppTheme
-                                                    .textSecondaryColor,
+                                                color:
+                                                    AppTheme.textSecondaryColor,
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                '${widget.package
-                                                    .duration} menit',
-                                                style: AppTheme.textTheme
-                                                    .bodySmall,
+                                                '${widget.package.duration} menit',
+                                                style: AppTheme
+                                                    .textTheme.bodySmall,
                                               ),
                                               const SizedBox(width: 12),
                                               Icon(
                                                 Icons.quiz_outlined,
                                                 size: 16,
-                                                color: AppTheme
-                                                    .textSecondaryColor,
+                                                color:
+                                                    AppTheme.textSecondaryColor,
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                '${widget.package
-                                                    .questionCount} soal',
-                                                style: AppTheme.textTheme
-                                                    .bodySmall,
+                                                '${widget.package.questionCount} soal',
+                                                style: AppTheme
+                                                    .textTheme.bodySmall,
                                               ),
                                             ],
                                           ),
@@ -876,8 +857,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 const Divider(),
                                 const SizedBox(height: 12),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment
-                                      .spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Harga',
@@ -892,8 +873,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 if (promoDiscount != null) ...[
                                   const SizedBox(height: 8),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment
-                                        .spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Row(
                                         children: [
@@ -926,8 +907,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   const SizedBox(height: 8),
                                 ],
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment
-                                      .spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Total Pembayaran',
@@ -982,17 +963,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       decoration: InputDecoration(
                                         hintText: 'Masukkan kode promo',
                                         errorText: promoError,
-                                        prefixIcon: const Icon(
-                                            Icons.discount_outlined),
+                                        prefixIcon:
+                                            const Icon(Icons.discount_outlined),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                              12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                           borderSide: BorderSide.none,
                                         ),
                                         filled: true,
                                         fillColor: Colors.grey.shade100,
-                                        contentPadding: const EdgeInsets
-                                            .symmetric(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
                                           horizontal: 16,
                                           vertical: 14,
                                         ),
@@ -1007,24 +988,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                           ? null
                                           : validatePromoCode,
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppTheme
-                                            .secondaryColor,
+                                        backgroundColor:
+                                            AppTheme.secondaryColor,
                                         foregroundColor: Colors.white,
                                         elevation: 0,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                              12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                       ),
                                       child: isValidatingPromo
                                           ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
                                           : const Text('Gunakan'),
                                     ),
                                   ),
@@ -1035,8 +1016,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.successColor.withOpacity(
-                                        0.1),
+                                    color:
+                                        AppTheme.successColor.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Row(
@@ -1048,21 +1029,22 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment
-                                              .start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'Kode promo berhasil digunakan!',
-                                              style: AppTheme.textTheme
-                                                  .bodyMedium?.copyWith(
+                                              style: AppTheme
+                                                  .textTheme.bodyMedium
+                                                  ?.copyWith(
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
                                               'Anda mendapatkan potongan Rp$promoDiscount',
-                                              style: AppTheme.textTheme
-                                                  .bodySmall,
+                                              style:
+                                                  AppTheme.textTheme.bodySmall,
                                             ),
                                           ],
                                         ),
@@ -1093,13 +1075,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           child: Column(
                             children: [
                               ...paymentMethods.map((method) {
-                                bool isSelected = selectedPaymentMethod ==
-                                    method['id'];
+                                bool isSelected =
+                                    selectedPaymentMethod == method['id'];
                                 return InkWell(
                                   onTap: () {
                                     setState(() {
                                       selectedPaymentMethod =
-                                      method['id'] as String;
+                                          method['id'] as String;
                                     });
                                   },
                                   child: Container(
@@ -1126,9 +1108,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                             color: isSelected
                                                 ? Colors.white.withOpacity(0.2)
                                                 : (method['color'] as Color?)
-                                                ?.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(
-                                                8),
+                                                    ?.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: Icon(
                                             method['icon'] as IconData?,
@@ -1179,8 +1161,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                         color: Colors.grey.shade100,
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                            color: Colors.grey.shade300)
-                                    ),
+                                            color: Colors.grey.shade300)),
                                     child: Row(
                                       children: [
                                         const Icon(
@@ -1210,12 +1191,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     // Payment button
                     CustomButton(
                       disabled: isProcessing || isPending,
-                      text: isPending
-                          ? 'Menunggu Pembayaran'
-                          : 'Bayar Sekarang',
-                      onPressed: isProcessing || isPending
-                          ? () {}
-                          : processPayment,
+                      text:
+                          isPending ? 'Menunggu Pembayaran' : 'Bayar Sekarang',
+                      onPressed:
+                          isProcessing || isPending ? () {} : processPayment,
                       isLoading: isProcessing,
                       isPrimary: true,
                       isFullWidth: true,

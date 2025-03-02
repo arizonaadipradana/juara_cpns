@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/screens/auth_screen.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
 import 'package:juara_cpns/widgets/custom_button.dart';
@@ -77,9 +77,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await FirebaseAuth.instance.signOut();
       if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const AuthScreen()),
-          (route) => false,
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRouter.login,
+              (route) => false,
         );
       }
     } catch (e) {
@@ -539,12 +540,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: SizedBox(
           width: 100,
           height: 100,
-          child:
-          FadeInImage.assetNetwork(
+          child: FadeInImage.assetNetwork(
             placeholder: "assets/images/avatar_placeholder.png",
             image: _profileImageUrl!,
             fit: BoxFit.cover,
-            placeholderFit: BoxFit.cover, // Ensure the placeholder also fits properly
+            placeholderFit: BoxFit.cover,
+            // Ensure the placeholder also fits properly
             fadeInDuration: const Duration(milliseconds: 300),
             imageErrorBuilder: (context, error, stackTrace) {
               print('Error loading profile image: $error');
@@ -1211,6 +1212,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-
-
 }

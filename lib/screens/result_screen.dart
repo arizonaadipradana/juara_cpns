@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:juara_cpns/class/app_router.dart';
 import 'package:juara_cpns/class/question_model.dart';
 import 'package:juara_cpns/screens/question_review_screen.dart';
 import 'package:juara_cpns/theme/app_theme.dart';
@@ -177,15 +178,14 @@ class ResultScreen extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            Navigator.push(
+            Navigator.pushNamed(
               context,
-              MaterialPageRoute(
-                builder: (context) => QuestionReviewScreen(
-                  question: question,
-                  userAnswer: userAnswer,
-                  questionNumber: index,
-                ),
-              ),
+              AppRouter.review,
+              arguments: {
+                'question': question,
+                'userAnswer': userAnswer,
+                'questionNumber': index,
+              },
             );
           },
           child: Container(
